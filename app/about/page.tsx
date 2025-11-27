@@ -27,14 +27,16 @@ export default function AboutPage() {
                 <h2 className="text-3xl font-display font-bold mb-4 text-primary">Our Story</h2>
                 <div className="space-y-4 text-muted-foreground">
                   <p>
-                    Cookie Corner began with a simple dream: to bring the delicate art of French crepe cakes to our
-                    community. What started as a passion project in a home kitchen has blossomed into a beloved local
-                    bakery known for our signature layered creations.
+                    Cookie Corner Cafe began with a heart-shaped matcha crepe cake I made to welcome my boyfriend home after a long business trip. As a self-taught baker, I've always loved experimenting with pastries, and crepe cakes quickly became a favourite. They are unique, delicious, and usually hard to find or very expensive. Making my own version, layer by layer, with a balanced matcha flavour felt special, and it became the moment I knew I wanted to share that same care and flavour with others through my baking.
                   </p>
                   <p>
-                    Each of our crepe cakes is a labor of love, featuring up to 20 paper-thin crepes layered with
-                    premium pastry cream. We use only the finest ingredients, sourced locally whenever possible, to
-                    create treats that are as beautiful as they are delicious.
+                    I now focus on handmade, made-to-order desserts with a gentle "not too sweet" flavour profile inspired by Asian-style treats. My menu features matcha and crème brûlée crepe cakes, matcha cheesecake, and matcha tiramisu, all crafted with premium Uji matcha from Japan. Each dessert is soft, creamy, and layered, with a cozy, rustic look. The designs are simple and cute, but the focus is always on flavour and quality.
+                  </p>
+                  <p>
+                    Cookie Corner Cafe also hosts seasonal pop-up events and workshops that I run with my best friend from high school, such as New Year vision board sessions and Valentine's cake or sugar cookie decorating. The atmosphere is cozy and creative, where guests can relax, make new friends, enjoy specialty drinks, and take home something they've made themselves.
+                  </p>
+                  <p>
+                    Whether you're ordering a cake or joining a workshop, my goal is to give you a small moment to treat yourself and enjoy desserts made with care and intention.
                   </p>
                 </div>
               </CardContent>
@@ -86,13 +88,10 @@ export default function AboutPage() {
             <h2 className="text-3xl font-display font-bold mb-6 text-center text-primary">Our Creations</h2>
             <div className="space-y-4 text-muted-foreground max-w-2xl mx-auto">
               <p className="text-center">
-                Our signature crepe cakes are perfect for any celebration - birthdays, anniversaries, or simply treating
-                yourself to something special. We also offer cookies and pastries for those looking for a smaller
-                indulgence.
+                Our menu features matcha and crème brûlée crepe cakes, matcha cheesecake, and matcha tiramisu, all crafted with premium Uji matcha from Japan. Each dessert is handmade and made-to-order with a gentle "not too sweet" flavour profile inspired by Asian-style treats.
               </p>
               <p className="text-center">
-                All of our products can be customized to match your preferences and dietary needs. Whether you're
-                looking for classic flavors or something unique, we're here to make your sweet dreams come true.
+                Perfect for any celebration - birthdays, anniversaries, or simply treating yourself to something special. All of our products are soft, creamy, and layered, with a cozy, rustic look that focuses on flavour and quality.
               </p>
             </div>
           </section>

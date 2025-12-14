@@ -23,16 +23,25 @@ This guide will help you initialize Supabase for the Cookie Corner Cafe project.
 
 ### Step 3: Set Up Environment Variables
 
-1. Copy `.env.local.example` to `.env.local`:
-
-   ```bash
-   cp .env.local.example .env.local
-   ```
+1. Create a `.env.local` file in the project root (this file should not be committed).
 
 2. Open `.env.local` and fill in your Supabase credentials:
+
    ```
    NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+   ```
+
+3. Add your Supabase Service Role key (server-only, used for Stripe webhook order updates):
+
+   ```
+   SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
+   ```
+
+4. Add Stripe credentials (server-only):
+   ```
+   STRIPE_SECRET_KEY=sk_live_or_test_...
+   STRIPE_WEBHOOK_SECRET=whsec_...
    ```
 
 ### Step 4: Run Database Migrations
@@ -57,6 +66,25 @@ Alternatively, you can use the Supabase CLI (see Option 2 below).
 
 2. Check that your app loads without errors
 3. Visit `/admin` to test authentication (you'll need to set up auth first)
+
+---
+
+## Stripe Checkout Setup
+
+### Step 1: Install Stripe SDK
+
+```bash
+npm install stripe
+```
+
+### Step 2: Configure Stripe Webhook
+
+1. In the Stripe Dashboard, create a webhook endpoint pointing to:
+   - `https://your-site.com/api/stripe/webhook` (production)
+   - `http://localhost:3000/api/stripe/webhook` (local dev)
+2. Subscribe to this event:
+   - `checkout.session.completed`
+3. Copy the webhook signing secret (`whsec_...`) into `STRIPE_WEBHOOK_SECRET` in `.env.local`.
 
 ---
 
@@ -179,6 +207,32 @@ Both tables have Row Level Security (RLS) enabled with appropriate policies:
 
 - Make sure you've run the migration scripts that create the RLS policies
 - Check the Supabase dashboard → **Authentication** → **Policies** to verify policies exist
+- Double-check you're pointing at the **same Supabase project** you ran the migrations against (compare `NEXT_PUBLIC_SUPABASE_URL` in `.env.local` with the project URL in Supabase Settings → API)
+
+If you see an error like:
+
+> `new row violates row-level security policy for table "orders"`
+
+Run this in Supabase **SQL Editor** to verify the `orders` policies actually exist in that database:
+
+```sql
+select policyname, permissive, roles, cmd, qual, with_check
+from pg_policies
+where schemaname = 'public' and tablename = 'orders'
+order by cmd, policyname;
+```
+
+If there is **no** `INSERT` policy for `anon`/`authenticated`, recreate it:
+
+```sql
+drop policy if exists "orders_insert_public" on public.orders;
+create policy "orders_insert_public"
+  on public.orders
+  as permissive
+  for insert
+  to anon, authenticated
+  with check (true);
+```
 
 ---
 

@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { CheckCircle } from "lucide-react"
+import { ClearCartOnSuccess } from "@/components/clear-cart-on-success"
 
 export default async function OrderSuccessPage({
   searchParams,
@@ -14,6 +15,7 @@ export default async function OrderSuccessPage({
   return (
     <>
       <Header />
+      <ClearCartOnSuccess />
       <main className="container mx-auto py-8">
         <div className="max-w-2xl mx-auto">
           <Card>

@@ -10,7 +10,6 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
 
 export function CheckoutForm() {
   const router = useRouter()
@@ -42,36 +41,28 @@ export function CheckoutForm() {
     setIsSubmitting(true)
 
     try {
-      const supabase = createClient()
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...formData,
+          cart,
+        }),
+      })
 
-      // Create order
-      const { data, error } = await supabase
-        .from("orders")
-        .insert({
-          customer_name: formData.customerName,
-          customer_email: formData.customerEmail,
-          customer_phone: formData.customerPhone,
-          price_paid: total,
-          product_orders: cart,
-          delivery_type: formData.deliveryType,
-          pickup_delivery_time: formData.pickupDeliveryTime,
-          delivery_address: formData.deliveryType === "delivery" ? formData.deliveryAddress : null,
-          notes: formData.notes,
-          status: "pending",
-        })
-        .select()
-        .single()
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to start checkout")
+      }
 
-      if (error) throw error
+      if (!data?.url) {
+        throw new Error("Missing Stripe redirect URL")
+      }
 
-      // Clear cart
-      localStorage.removeItem("cart")
-
-      // Redirect to success page
-      router.push(`/order-success?orderId=${data.id}`)
+      window.location.assign(data.url)
     } catch (error) {
       console.error("Error creating order:", error)
-      alert("Failed to create order. Please try again.")
+      alert("Failed to start Stripe checkout. Please try again.")
     } finally {
       setIsSubmitting(false)
     }

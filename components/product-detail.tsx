@@ -9,6 +9,7 @@ import Image from "next/image";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Product {
   id: string;
@@ -17,7 +18,7 @@ interface Product {
   price_small: number | null;
   price_medium: number | null;
   price_large: number | null;
-  image_url: string | null;
+  image_urls: string[] | null;
   category: string;
   customizations: string[] | null;
 }
@@ -29,6 +30,7 @@ interface ProductDetailProps {
 export function ProductDetail({ product }: ProductDetailProps) {
   const router = useRouter();
   const { toast } = useToast();
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [selectedSize, setSelectedSize] = useState<
     "small" | "medium" | "large" | null
   >(
@@ -41,6 +43,17 @@ export function ProductDetail({ product }: ProductDetailProps) {
       : null
   );
 
+  const images = product.image_urls || [];
+  const hasMultipleImages = images.length > 1;
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % images.length);
+  };
+
+  const previousImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+
   const getPrice = (size: "small" | "medium" | "large" | null) => {
     if (size === "small") return product.price_small;
     if (size === "medium") return product.price_medium;
@@ -49,14 +62,6 @@ export function ProductDetail({ product }: ProductDetailProps) {
   };
 
   const currentPrice = getPrice(selectedSize);
-
-  const imageSrc =
-    product.image_url ||
-    (product.category === "crepe-cake"
-      ? "/unnamed.jpg"
-      : `/placeholder.svg?height=600&width=600&query=${encodeURIComponent(
-          product.name
-        )}`);
 
   const handleAddToCart = () => {
     if (
@@ -103,14 +108,79 @@ export function ProductDetail({ product }: ProductDetailProps) {
 
   return (
     <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
-      <div className="aspect-square relative bg-muted rounded-lg overflow-hidden">
-        <Image
-          src={imageSrc}
-          alt={product.name}
-          fill
-          className="object-cover"
-          priority
-        />
+      <div className="space-y-4">
+        {images.length > 0 ? (
+          <>
+            {/* Main image */}
+            <div className="aspect-square relative bg-muted rounded-lg overflow-hidden group">
+              <Image
+                src={images[currentImageIndex]}
+                alt={`${product.name} - Image ${currentImageIndex + 1}`}
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover"
+                priority
+              />
+
+              {/* Navigation arrows for multiple images */}
+              {hasMultipleImages && (
+                <>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={previousImage}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={nextImage}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+
+                  {/* Image counter */}
+                  <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                    {currentImageIndex + 1} / {images.length}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Thumbnail navigation */}
+            {hasMultipleImages && (
+              <div className="grid grid-cols-4 gap-2">
+                {images.map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentImageIndex(index)}
+                    className={`aspect-square relative bg-muted rounded-lg overflow-hidden border-2 transition-all ${
+                      index === currentImageIndex
+                        ? "border-primary ring-2 ring-primary/20"
+                        : "border-transparent hover:border-primary/50"
+                    }`}
+                  >
+                    <Image
+                      src={image}
+                      alt={`Thumbnail ${index + 1}`}
+                      fill
+                      sizes="(max-width: 768px) 20vw, 10vw"
+                      className="object-cover"
+                      loading="lazy"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="aspect-square relative bg-muted rounded-lg overflow-hidden flex items-center justify-center">
+            <p className="text-muted-foreground">No image available</p>
+          </div>
+        )}
       </div>
 
       <Card className="bg-card shadow-sm">

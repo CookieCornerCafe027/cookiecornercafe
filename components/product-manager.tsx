@@ -1,42 +1,66 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import { Plus, Pencil, Trash2 } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Plus, Pencil, Trash2, Upload, X } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 interface Product {
-  id: string
-  name: string
-  description: string
-  price_small: number | null
-  price_medium: number | null
-  price_large: number | null
-  image_url: string | null
-  category: string
-  customizations: string[] | null
-  is_active: boolean
+  id: string;
+  name: string;
+  description: string;
+  price_small: number | null;
+  price_medium: number | null;
+  price_large: number | null;
+  image_urls: string[] | null;
+  category: string;
+  customizations: string[] | null;
+  is_active: boolean;
 }
 
 interface ProductManagerProps {
-  products: Product[]
+  products: Product[];
 }
 
-export function ProductManager({ products: initialProducts }: ProductManagerProps) {
-  const [products, setProducts] = useState(initialProducts)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
-  const router = useRouter()
+export function ProductManager({
+  products: initialProducts,
+}: ProductManagerProps) {
+  const [products, setProducts] = useState(initialProducts);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
+  const router = useRouter();
+
+  // Sync local state when initialProducts prop changes (e.g., after router.refresh())
+  useEffect(() => {
+    setProducts(initialProducts);
+  }, [initialProducts]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -44,11 +68,10 @@ export function ProductManager({ products: initialProducts }: ProductManagerProp
     price_small: "",
     price_medium: "",
     price_large: "",
-    image_url: "",
     category: "crepe-cake",
     customizations: "",
     is_active: true,
-  })
+  });
 
   const resetForm = () => {
     setFormData({
@@ -57,95 +80,212 @@ export function ProductManager({ products: initialProducts }: ProductManagerProp
       price_small: "",
       price_medium: "",
       price_large: "",
-      image_url: "",
       category: "crepe-cake",
       customizations: "",
       is_active: true,
-    })
-    setEditingProduct(null)
-  }
+    });
+    setEditingProduct(null);
+    setImageFiles([]);
+    setImagePreviews([]);
+    setExistingImageUrls([]);
+  };
 
   const openEditDialog = (product: Product) => {
-    setEditingProduct(product)
+    setEditingProduct(product);
     setFormData({
       name: product.name,
       description: product.description || "",
       price_small: product.price_small?.toString() || "",
       price_medium: product.price_medium?.toString() || "",
       price_large: product.price_large?.toString() || "",
-      image_url: product.image_url || "",
       category: product.category,
       customizations: product.customizations?.join(", ") || "",
       is_active: product.is_active,
-    })
-    setIsDialogOpen(true)
-  }
+    });
+    setExistingImageUrls(product.image_urls || []);
+    setImageFiles([]);
+    setImagePreviews([]);
+    setIsDialogOpen(true);
+  };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const supabase = createClient()
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
-    const productData = {
-      name: formData.name,
-      description: formData.description,
-      price_small: formData.price_small ? Number.parseFloat(formData.price_small) : null,
-      price_medium: formData.price_medium ? Number.parseFloat(formData.price_medium) : null,
-      price_large: formData.price_large ? Number.parseFloat(formData.price_large) : null,
-      image_url: formData.image_url || null,
-      category: formData.category,
-      customizations: formData.customizations
-        ? formData.customizations
-            .split(",")
-            .map((c) => c.trim())
-            .filter(Boolean)
-        : null,
-      is_active: formData.is_active,
-    }
+    const validFiles: File[] = [];
+    const newPreviews: string[] = [];
 
-    try {
-      if (editingProduct) {
-        // Update existing product
-        const { error } = await supabase.from("products").update(productData).eq("id", editingProduct.id)
-
-        if (error) throw error
-      } else {
-        // Create new product
-        const { error } = await supabase.from("products").insert(productData)
-
-        if (error) throw error
+    for (const file of files) {
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        alert(`${file.name} is not an image file`);
+        continue;
+      }
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert(`${file.name} is too large (max 5MB)`);
+        continue;
       }
 
-      setIsDialogOpen(false)
-      resetForm()
-      router.refresh()
-    } catch (error) {
-      console.error("Error saving product:", error)
-      alert("Failed to save product")
+      validFiles.push(file);
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        newPreviews.push(reader.result as string);
+        if (newPreviews.length === validFiles.length) {
+          setImagePreviews([...imagePreviews, ...newPreviews]);
+        }
+      };
+      reader.readAsDataURL(file);
     }
-  }
+
+    setImageFiles([...imageFiles, ...validFiles]);
+  };
+
+  const removeNewImage = (index: number) => {
+    setImageFiles(imageFiles.filter((_, i) => i !== index));
+    setImagePreviews(imagePreviews.filter((_, i) => i !== index));
+  };
+
+  const removeExistingImage = (index: number) => {
+    setExistingImageUrls(existingImageUrls.filter((_, i) => i !== index));
+  };
+
+  const uploadImage = async (file: File): Promise<string | null> => {
+    const supabase = createClient();
+
+    // Create a unique filename
+    const fileExt = file.name.split(".").pop();
+    const fileName = `${Math.random()
+      .toString(36)
+      .substring(2)}-${Date.now()}.${fileExt}`;
+    const filePath = `products/${fileName}`;
+
+    try {
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from("product-images")
+        .upload(filePath, file);
+
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        throw uploadError;
+      }
+
+      // Get public URL
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("product-images").getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      return null;
+    }
+  };
+
+  const uploadMultipleImages = async (files: File[]): Promise<string[]> => {
+    const uploadPromises = files.map((file) => uploadImage(file));
+    const results = await Promise.all(uploadPromises);
+    return results.filter((url): url is string => url !== null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setUploading(true);
+    const supabase = createClient();
+
+    try {
+      let allImageUrls = [...existingImageUrls];
+
+      // Upload new images if selected
+      if (imageFiles.length > 0) {
+        const uploadedUrls = await uploadMultipleImages(imageFiles);
+        if (uploadedUrls.length !== imageFiles.length) {
+          alert("Some images failed to upload. Please try again.");
+          setUploading(false);
+          return;
+        }
+        allImageUrls = [...allImageUrls, ...uploadedUrls];
+      }
+
+      const productData = {
+        name: formData.name,
+        description: formData.description,
+        price_small: formData.price_small
+          ? Number.parseFloat(formData.price_small)
+          : null,
+        price_medium: formData.price_medium
+          ? Number.parseFloat(formData.price_medium)
+          : null,
+        price_large: formData.price_large
+          ? Number.parseFloat(formData.price_large)
+          : null,
+        image_urls: allImageUrls.length > 0 ? allImageUrls : null,
+        category: formData.category,
+        customizations: formData.customizations
+          ? formData.customizations
+              .split(",")
+              .map((c) => c.trim())
+              .filter(Boolean)
+          : null,
+        is_active: formData.is_active,
+      };
+
+      if (editingProduct) {
+        // Update existing product
+        const { error } = await supabase
+          .from("products")
+          .update(productData)
+          .eq("id", editingProduct.id);
+
+        if (error) throw error;
+      } else {
+        // Create new product
+        const { error } = await supabase.from("products").insert(productData);
+
+        if (error) throw error;
+      }
+
+      setIsDialogOpen(false);
+      resetForm();
+      router.refresh();
+    } catch (error) {
+      console.error("Error saving product:", error);
+      alert("Failed to save product");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this product?")) return
+    if (!confirm("Are you sure you want to delete this product?")) return;
 
-    const supabase = createClient()
+    const supabase = createClient();
     try {
-      const { error } = await supabase.from("products").delete().eq("id", id)
+      const { error } = await supabase.from("products").delete().eq("id", id);
 
-      if (error) throw error
-      router.refresh()
+      if (error) throw error;
+
+      // Update local state immediately for instant UI feedback
+      setProducts(products.filter((p) => p.id !== id));
+
+      // Refresh server component to ensure data consistency
+      router.refresh();
     } catch (error) {
-      console.error("Error deleting product:", error)
-      alert("Failed to delete product")
+      console.error("Error deleting product:", error);
+      alert("Failed to delete product");
     }
-  }
+  };
 
   return (
     <div className="space-y-4">
       <Dialog
         open={isDialogOpen}
         onOpenChange={(open) => {
-          setIsDialogOpen(open)
-          if (!open) resetForm()
+          setIsDialogOpen(open);
+          if (!open) resetForm();
         }}
       >
         <DialogTrigger asChild>
@@ -156,7 +296,9 @@ export function ProductManager({ products: initialProducts }: ProductManagerProp
         </DialogTrigger>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingProduct ? "Edit Product" : "Add New Product"}</DialogTitle>
+            <DialogTitle>
+              {editingProduct ? "Edit Product" : "Add New Product"}
+            </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid gap-2">
@@ -165,7 +307,9 @@ export function ProductManager({ products: initialProducts }: ProductManagerProp
                 id="name"
                 required
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
               />
             </div>
 
@@ -174,7 +318,9 @@ export function ProductManager({ products: initialProducts }: ProductManagerProp
               <Textarea
                 id="description"
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
               />
             </div>
 
@@ -182,7 +328,9 @@ export function ProductManager({ products: initialProducts }: ProductManagerProp
               <Label htmlFor="category">Category</Label>
               <Select
                 value={formData.category}
-                onValueChange={(value) => setFormData({ ...formData, category: value })}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, category: value })
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -203,7 +351,9 @@ export function ProductManager({ products: initialProducts }: ProductManagerProp
                   type="number"
                   step="0.01"
                   value={formData.price_small}
-                  onChange={(e) => setFormData({ ...formData, price_small: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, price_small: e.target.value })
+                  }
                 />
               </div>
               <div className="grid gap-2">
@@ -213,7 +363,9 @@ export function ProductManager({ products: initialProducts }: ProductManagerProp
                   type="number"
                   step="0.01"
                   value={formData.price_medium}
-                  onChange={(e) => setFormData({ ...formData, price_medium: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, price_medium: e.target.value })
+                  }
                 />
               </div>
               <div className="grid gap-2">
@@ -223,28 +375,138 @@ export function ProductManager({ products: initialProducts }: ProductManagerProp
                   type="number"
                   step="0.01"
                   value={formData.price_large}
-                  onChange={(e) => setFormData({ ...formData, price_large: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, price_large: e.target.value })
+                  }
                 />
               </div>
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="image_url">Image URL</Label>
-              <Input
-                id="image_url"
-                type="url"
-                value={formData.image_url}
-                onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-              />
+              <Label htmlFor="images">Product Images</Label>
+
+              {/* Display existing images */}
+              {existingImageUrls.length > 0 && (
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  {existingImageUrls.map((url, index) => (
+                    <div
+                      key={`existing-${index}`}
+                      className="relative aspect-video rounded-lg overflow-hidden border"
+                    >
+                      <Image
+                        src={url}
+                        alt={`Existing ${index + 1}`}
+                        fill
+                        sizes="(max-width: 768px) 50vw, 25vw"
+                        className="object-cover"
+                        loading="lazy"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-2 right-2 h-6 w-6"
+                        onClick={() => removeExistingImage(index)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                      {index === 0 && (
+                        <div className="absolute bottom-2 left-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded">
+                          Primary
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Display new image previews */}
+              {imagePreviews.length > 0 && (
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  {imagePreviews.map((preview, index) => (
+                    <div
+                      key={`new-${index}`}
+                      className="relative aspect-video rounded-lg overflow-hidden border border-primary"
+                    >
+                      <Image
+                        src={preview}
+                        alt={`New ${index + 1}`}
+                        fill
+                        sizes="(max-width: 768px) 50vw, 25vw"
+                        className="object-cover"
+                        unoptimized
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-2 right-2 h-6 w-6"
+                        onClick={() => removeNewImage(index)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                      <div className="absolute bottom-2 left-2 bg-green-600 text-white text-xs px-2 py-1 rounded">
+                        New
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Upload button */}
+              <div className="flex items-center justify-center w-full">
+                <label
+                  htmlFor="images"
+                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
+                    <p className="mb-2 text-sm text-muted-foreground">
+                      <span className="font-semibold">Click to upload</span> or
+                      drag and drop
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      PNG, JPG, WebP (MAX. 5MB each)
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {existingImageUrls.length + imagePreviews.length > 0
+                        ? `${
+                            existingImageUrls.length + imagePreviews.length
+                          } image${
+                            existingImageUrls.length + imagePreviews.length > 1
+                              ? "s"
+                              : ""
+                          } selected`
+                        : "Select multiple images"}
+                    </p>
+                  </div>
+                  <input
+                    id="images"
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageChange}
+                  />
+                </label>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Upload multiple images. The first image will be the primary
+                image shown in listings.
+              </p>
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="customizations">Customizations (comma-separated)</Label>
+              <Label htmlFor="customizations">
+                Customizations (comma-separated)
+              </Label>
               <Input
                 id="customizations"
                 placeholder="Extra strawberries, Matcha drizzle, Gold leaf"
                 value={formData.customizations}
-                onChange={(e) => setFormData({ ...formData, customizations: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, customizations: e.target.value })
+                }
               />
             </div>
 
@@ -252,13 +514,19 @@ export function ProductManager({ products: initialProducts }: ProductManagerProp
               <Switch
                 id="is_active"
                 checked={formData.is_active}
-                onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, is_active: checked })
+                }
               />
               <Label htmlFor="is_active">Active (visible to customers)</Label>
             </div>
 
-            <Button type="submit" className="w-full">
-              {editingProduct ? "Update Product" : "Add Product"}
+            <Button type="submit" className="w-full" disabled={uploading}>
+              {uploading
+                ? "Uploading..."
+                : editingProduct
+                ? "Update Product"
+                : "Add Product"}
             </Button>
           </form>
         </DialogContent>
@@ -273,24 +541,44 @@ export function ProductManager({ products: initialProducts }: ProductManagerProp
                   <div className="flex items-center gap-2 mb-2">
                     <h3 className="font-semibold text-lg">{product.name}</h3>
                     <span
-                      className={`text-xs px-2 py-1 rounded ${product.is_active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}
+                      className={`text-xs px-2 py-1 rounded ${
+                        product.is_active
+                          ? "bg-primary/10 text-primary"
+                          : "bg-muted text-muted-foreground"
+                      }`}
                     >
                       {product.is_active ? "Active" : "Inactive"}
                     </span>
                   </div>
-                  <p className="text-sm text-muted-foreground mb-2">{product.description}</p>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    {product.description}
+                  </p>
                   <div className="flex gap-4 text-sm">
                     <span>Category: {product.category}</span>
-                    {product.price_small && <span>S: ${product.price_small}</span>}
-                    {product.price_medium && <span>M: ${product.price_medium}</span>}
-                    {product.price_large && <span>L: ${product.price_large}</span>}
+                    {product.price_small && (
+                      <span>S: ${product.price_small}</span>
+                    )}
+                    {product.price_medium && (
+                      <span>M: ${product.price_medium}</span>
+                    )}
+                    {product.price_large && (
+                      <span>L: ${product.price_large}</span>
+                    )}
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="icon" onClick={() => openEditDialog(product)}>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => openEditDialog(product)}
+                  >
                     <Pencil className="h-4 w-4" />
                   </Button>
-                  <Button variant="outline" size="icon" onClick={() => handleDelete(product.id)}>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleDelete(product.id)}
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -300,5 +588,5 @@ export function ProductManager({ products: initialProducts }: ProductManagerProp
         ))}
       </div>
     </div>
-  )
+  );
 }

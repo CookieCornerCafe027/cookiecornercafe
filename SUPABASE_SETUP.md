@@ -39,9 +39,17 @@ This guide will help you initialize Supabase for the Cookie Corner Cafe project.
    ```
 
 4. Add Stripe credentials (server-only):
+
    ```
    STRIPE_SECRET_KEY=sk_live_or_test_...
    STRIPE_WEBHOOK_SECRET=whsec_...
+   ```
+
+5. Add Resend credentials (server-only, used by Stripe webhook to email the customer after successful payment):
+   ```
+   RESEND_API_KEY=re_...
+   # Used as the Resend sender address (and also used to BCC confirmations to your internal inbox)
+   ORDER_NOTIFICATION_EMAIL=orders@yourdomain.com
    ```
 
 ### Step 4: Run Database Migrations
@@ -50,6 +58,7 @@ This guide will help you initialize Supabase for the Cookie Corner Cafe project.
 2. Run the SQL scripts in order:
    - First, run `supabase/migrations/001_create_products_table.sql`
    - Then, run `supabase/migrations/002_create_orders_table.sql`
+   - Then, run `supabase/migrations/006_add_order_email_and_stripe_fields.sql` (adds email + Stripe reconciliation fields)
    - Next, run `supabase/migrations/004_create_product_images_bucket.sql` (for image uploads)
    - Then, run `supabase/migrations/005_convert_to_multiple_images.sql` (converts to multiple images support)
    - Finally, run `supabase/migrations/003_seed_sample_products.sql` (optional, for sample data)

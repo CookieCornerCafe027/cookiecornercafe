@@ -15,3 +15,4 @@ alter table public.products
 -- Add a comment for documentation
 comment on column public.products.image_urls is 'Array of image URLs for the product. First image is the primary/featured image.';
 
+

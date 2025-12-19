@@ -7,6 +7,17 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 
+const STRIPE_CURRENCY = (process.env.STRIPE_CURRENCY ?? "cad").toLowerCase();
+
+function isMissingColumnError(err: any, column: string) {
+  const msg = (err?.message ?? err?.toString?.() ?? "").toString();
+  // Supabase/PostgREST error typically looks like:
+  // "Could not find the 'stripe_session_id' column of 'orders' in the schema cache"
+  return (
+    msg.includes(`'${column}'`) && msg.toLowerCase().includes("schema cache")
+  );
+}
+
 const CartItemSchema = z.object({
   id: z.string().uuid(),
   quantity: z.number().int().min(1).max(99),
@@ -130,7 +141,7 @@ export async function POST(req: Request) {
 
       lineItems.push({
         price_data: {
-          currency: "usd",
+          currency: STRIPE_CURRENCY,
           product_data: {
             name: `${product.name}${sizeLabel}`,
           },
@@ -165,7 +176,7 @@ export async function POST(req: Request) {
       pickup_delivery_time: input.pickupDeliveryTime,
       delivery_address:
         input.deliveryType === "delivery"
-          ? input.deliveryAddress ?? null
+          ? (input.deliveryAddress ?? null)
           : null,
       notes: input.notes ?? null,
       status: "pending",
@@ -189,6 +200,7 @@ export async function POST(req: Request) {
       cancel_url: cancelUrl.toString(),
       metadata: {
         orderId,
+        currency: STRIPE_CURRENCY,
       },
     });
 
@@ -197,6 +209,19 @@ export async function POST(req: Request) {
         { error: "Stripe session created without a redirect URL" },
         { status: 500 }
       );
+    }
+
+    // Store the Stripe session id for reconciliation / idempotent webhook handling.
+    const { error: sessionIdError } = await supabase
+      .from("orders")
+      .update({ stripe_session_id: session.id })
+      .eq("id", orderId);
+    // If the database hasn't run migration 006 yet, don't fail checkout.
+    if (
+      sessionIdError &&
+      !isMissingColumnError(sessionIdError, "stripe_session_id")
+    ) {
+      throw sessionIdError;
     }
 
     return NextResponse.json({ url: session.url });

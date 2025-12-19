@@ -1,6 +1,9 @@
 import { createClient } from "@/lib/supabase/server"
 import { Header } from "@/components/header"
 import { ProductGrid } from "@/components/product-grid"
+import { EventGrid } from "@/components/event-grid"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 
 export default async function Home() {
   const supabase = await createClient()
@@ -15,6 +18,17 @@ export default async function Home() {
 
   if (error) {
     console.error("Error fetching products:", error)
+  }
+
+  const { data: events, error: eventsError } = await supabase
+    .from("events")
+    .select("*")
+    .eq("is_active", true)
+    .order("created_at", { ascending: false })
+    .limit(3)
+
+  if (eventsError) {
+    console.error("Error fetching events:", eventsError)
   }
 
   return (
@@ -37,6 +51,19 @@ export default async function Home() {
         <section>
           <h2 className="text-3xl font-display font-bold mb-6 text-center">Our Creations</h2>
           <ProductGrid products={products || []} />
+        </section>
+
+        {/* Events Section */}
+        <section className="mt-16">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
+            <h2 className="text-3xl font-display font-bold text-center sm:text-left">
+              Events
+            </h2>
+            <Button asChild variant="outline">
+              <Link href="/events">View all events</Link>
+            </Button>
+          </div>
+          <EventGrid events={(events as any) || []} />
         </section>
       </main>
     </>

@@ -110,6 +110,9 @@ export function Header() {
           <Link href="/" className="text-sm font-medium hover:text-primary transition-colors">
             Shop
           </Link>
+          <Link href="/events" className="text-sm font-medium hover:text-primary transition-colors">
+            Events
+          </Link>
           <Link href="/about" className="text-sm font-medium hover:text-primary transition-colors">
             About
           </Link>

@@ -44,7 +44,15 @@ export async function POST(req: Request) {
   }
 
   // Only fulfill on successful payment.
-  if (event.type === "checkout.session.completed") {
+  // Note: for some async payment methods, Stripe may send `checkout.session.completed`
+  // with `payment_status: "unpaid"` and later send `checkout.session.async_payment_succeeded`.
+  const isCheckoutPaidEvent =
+    event.type === "checkout.session.completed" ||
+    event.type === "checkout.session.async_payment_succeeded";
+  const isCheckoutFailedEvent =
+    event.type === "checkout.session.async_payment_failed";
+
+  if (isCheckoutPaidEvent || isCheckoutFailedEvent) {
     const session = event.data.object as any;
     const orderId = session?.metadata?.orderId;
 
@@ -67,20 +75,6 @@ export async function POST(req: Request) {
         );
       }
 
-      // Always mark order as confirmed after Stripe confirms payment (idempotent).
-      // Keep this update independent of optional Stripe reconciliation fields so it won't fail if
-      // the database hasn't applied migration 006 yet.
-      const { error: confirmError } = await supabase
-        .from("orders")
-        .update({ status: "confirmed" })
-        .eq("id", orderId);
-      if (confirmError) {
-        return NextResponse.json(
-          { error: confirmError.message },
-          { status: 500 }
-        );
-      }
-
       // Best-effort: store Stripe session id for reconciliation / debugging.
       const { error: sessionIdError } = await supabase
         .from("orders")
@@ -94,6 +88,36 @@ export async function POST(req: Request) {
         if (!isMissingColumn) {
           return NextResponse.json({ error: msg }, { status: 500 });
         }
+      }
+
+      // If Stripe tells us the async payment failed, keep the order pending (or handle manually).
+      // We intentionally do not auto-cancel here because the DB currently only supports a limited
+      // status enum and businesses often want to review/retry payment flows.
+      if (isCheckoutFailedEvent) {
+        return NextResponse.json({ received: true });
+      }
+
+      const paymentStatus = (session?.payment_status ?? "").toString();
+      const isPaid =
+        paymentStatus === "paid" || paymentStatus === "no_payment_required";
+      if (!isPaid) {
+        // For async methods this can be "unpaid" on `checkout.session.completed`.
+        // We'll wait for `checkout.session.async_payment_succeeded`.
+        return NextResponse.json({ received: true });
+      }
+
+      // Mark order as confirmed after Stripe confirms payment (idempotent).
+      // Keep this update independent of optional Stripe reconciliation fields so it won't fail if
+      // the database hasn't applied migration 006 yet.
+      const { error: confirmError } = await supabase
+        .from("orders")
+        .update({ status: "confirmed" })
+        .eq("id", orderId);
+      if (confirmError) {
+        return NextResponse.json(
+          { error: confirmError.message },
+          { status: 500 }
+        );
       }
 
       // Send confirmation email once per order.

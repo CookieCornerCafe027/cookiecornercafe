@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Quicksand, Caveat } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
+import { Toaster } from "@/components/ui/toaster"
 import "./globals.css"
 
 const quicksand = Quicksand({
@@ -46,6 +47,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${quicksand.variable} ${caveat.variable} font-sans antialiased`}>
         {children}
+        <Toaster />
         <Analytics />
       </body>
     </html>

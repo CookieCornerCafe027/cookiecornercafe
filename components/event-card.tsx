@@ -25,8 +25,15 @@ export function EventCard({ event }: { event: EventForCard }) {
   const primaryImage = event.image_urls?.[0];
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col pt-0">
-      <Link href={`/events/${event.id}`} className="flex flex-col gap-6 flex-1">
+    <Card className="relative overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col pt-0">
+      {/* Full-card link for reliable tapping on mobile */}
+      <Link
+        href={`/events/${event.id}`}
+        aria-label={`View ${event.title}`}
+        className="absolute inset-0 z-0"
+      />
+
+      <div className="relative z-10 flex flex-col flex-1 pointer-events-none">
         {primaryImage ? (
           <div className="aspect-square relative bg-muted">
             <Image
@@ -70,9 +77,9 @@ export function EventCard({ event }: { event: EventForCard }) {
             </CardDescription>
           )}
         </CardHeader>
-      </Link>
+      </div>
 
-      <CardFooter className="flex items-center justify-between mt-auto">
+      <CardFooter className="relative z-10 flex items-center justify-between mt-auto pointer-events-auto">
         <div className="flex flex-col">
           <span className="text-lg font-semibold text-primary">
             ${event.price_per_entry.toFixed(2)}

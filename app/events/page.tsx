@@ -18,7 +18,7 @@ export default async function EventsPage() {
   return (
     <>
       <Header />
-      <main className="container mx-auto py-8">
+      <main className="container mx-auto py-8 px-4">
         <section className="mb-8 text-center">
           <h1 className="text-4xl md:text-5xl font-display font-bold mb-3">
             Events

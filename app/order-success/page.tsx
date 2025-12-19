@@ -16,7 +16,7 @@ export default async function OrderSuccessPage({
     <>
       <Header />
       <ClearCartOnSuccess />
-      <main className="container mx-auto py-8">
+      <main className="container mx-auto py-8 px-4">
         <div className="max-w-2xl mx-auto">
           <Card>
             <CardHeader className="text-center">

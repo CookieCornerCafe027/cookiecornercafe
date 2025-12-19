@@ -6,7 +6,7 @@ export default function AboutPage() {
   return (
     <>
       <Header />
-      <main className="container mx-auto py-8">
+      <main className="container mx-auto py-8 px-4">
         <div className="max-w-4xl mx-auto space-y-12">
           {/* Hero Section */}
           <section className="text-center">

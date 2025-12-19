@@ -34,7 +34,7 @@ export default async function Home() {
   return (
     <>
       <Header />
-      <main className="container mx-auto py-8">
+      <main className="container mx-auto py-8 px-4">
         {/* Hero Section */}
         <section className="mb-12 text-center">
           <div className="bg-card/80 backdrop-blur rounded-3xl p-8 md:p-12 border-2 border-border shadow-xl">

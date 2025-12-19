@@ -38,11 +38,16 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
   const primaryImage = product.image_urls?.[0];
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col pt-0">
+    <Card className="relative overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col pt-0">
+      {/* Full-card link for reliable tapping on mobile */}
       <Link
         href={`/product/${product.id}`}
-        className="flex flex-col gap-6 flex-1"
-      >
+        aria-label={`View ${product.name}`}
+        className="absolute inset-0 z-0"
+      />
+
+      {/* Content sits above the link; most of it passes clicks through to the link */}
+      <div className="relative z-10 flex flex-col flex-1 pointer-events-none">
         {primaryImage ? (
           <div className="aspect-square relative bg-muted">
             <Image
@@ -66,6 +71,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
             <p className="text-muted-foreground text-sm">No image available</p>
           </div>
         )}
+
         <CardHeader>
           <div className="flex items-start justify-between gap-2">
             <CardTitle className="text-lg leading-tight">
@@ -79,14 +85,14 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
             {product.description}
           </CardDescription>
         </CardHeader>
-      </Link>
-      <CardFooter className="flex items-center justify-between mt-auto">
+      </div>
+
+      <CardFooter className="relative z-10 flex items-center justify-between mt-auto pointer-events-auto">
         <span className="text-lg font-semibold text-primary">
           {priceDisplay}
         </span>
         <Button
-          onClick={(e) => {
-            e.preventDefault();
+          onClick={() => {
             onAddToCart(product.id);
           }}
         >

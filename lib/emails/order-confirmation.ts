@@ -64,14 +64,6 @@ export function renderOrderConfirmationEmail(order: OrderForEmail) {
   const instagramUrl = `https://instagram.com/${instagramHandle}`;
   const logoUrl = "https://cookiecornercafe.ca/android-chrome-192x192.png";
 
-  // Base64 Globe Icon for Website
-  const globeIconBase64 =
-    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEwEAmpwYAAABy0lEQVR4nO2Vv0vDQRSFv6S1SUpAsS6CInZpEMWpCIid7Iid/As6iX9AJ3XpLOrgIunSwaEIdXByEAdBByuIdXByUHCpS96ToS8pSdrS6pIOfuFw793v3r1338ckSUKSlS6wA+wAh8AR8ATcg8qOAt88O6U8U9uAnH9LAb2v8Y6rR8AdkAHeK7Xl656O7oEq0AVmY8Y7rQvMA0uA6y2AnUoD69YlXpE6wDLQD27Yf6A3fD8BfN8D9mB/fA3Ym9FhM38U9pI/YQ+oY98R28MvCrtPH7CH9DHwDrsV2L3A7tNfS4F9KLAXAnsqsA8E9lRgTwX2qcDqBfb5D+w/1j8S2Isf2A7Y6wS2A/YugfVgeyrA7mB7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8/wH6L7EfgL0P/AAAAABJRU5ErkJggg==";
-
-  // Base64 Instagram Icon
-  const instagramIconBase64 =
-    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEwEAmpwYAAABmElEQVR4nO2Vv0vDUBDHv0mrlSqiOIsIDm6C4uYf0En9Ax06uVgnR0cn/QOdunQIdXBy6CIIdXByEAdBB6uIdXBykL70PQ76kpKkLa0u6eAXDve9977v3r1338ckSUKSlS6wA+wAh8AR8ATcg8qOAt88O6U8U9uAnH9LAb2v8Y6rR8AdkAHeK7Xl656O7oEq0AVmY8Y7rQvMA0uA6y2AnUoD69YlXpE6wDLQD27Yf6A3fD8BfN8D9mB/fA3Ym9FhM38U9pI/YQ+oY98R28MvCrtPH7CH9DHwDrsV2L3A7tNfS4F9KLAXAnsqsA8E9lRgTwX2qcDqBfb5D+w/1j8S2Isf2A7Y6wS2A/YugfVgeyrA7mB7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8/wH6L7EfgL0P/AAAAABJRU5ErkJggg==";
-
   // Brand colors (from `app/globals.css`)
   const brand = {
     bg: "#fcd9e5", // --background
@@ -154,6 +146,76 @@ export function renderOrderConfirmationEmail(order: OrderForEmail) {
     body, .wrapper { background-color: ${brand.bg} !important; margin: 0 !important; padding: 0 !important; width: 100% !important; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
     table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
     img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+    /* CSS icons */
+    .gg-instagram {
+      box-sizing: border-box;
+      position: relative;
+      display: block;
+      transform: scale(var(--ggs, 1));
+      border: 2px solid transparent;
+      box-shadow: 0 0 0 2px;
+      border-radius: 4px;
+      width: 20px;
+      height: 20px;
+    }
+    .gg-instagram::after,
+    .gg-instagram::before {
+      content: "";
+      display: block;
+      box-sizing: border-box;
+      position: absolute;
+    }
+    .gg-instagram::after {
+      border: 2px solid;
+      left: 3px;
+      width: 10px;
+      height: 10px;
+      border-radius: 100%;
+      top: 3px;
+    }
+    .gg-instagram::before {
+      border-radius: 3px;
+      width: 2px;
+      height: 2px;
+      background: currentColor;
+      right: 1px;
+      top: 1px;
+    }
+    .gg-website {
+      box-sizing: border-box;
+      position: relative;
+      display: block;
+      transform: scale(var(--ggs, 1));
+      width: 22px;
+      height: 18px;
+      border: 2px solid;
+      border-radius: 3px;
+      box-shadow: 0 -1px 0;
+    }
+    .gg-website::after,
+    .gg-website::before {
+      content: "";
+      display: block;
+      box-sizing: border-box;
+      position: absolute;
+      width: 6px;
+      top: 2px;
+    }
+    .gg-website::before {
+      background: currentColor;
+      left: 2px;
+      box-shadow:
+        0 4px 0,
+        0 8px 0;
+      border-radius: 3px;
+      height: 2px;
+    }
+    .gg-website::after {
+      height: 10px;
+      border: 2px solid;
+      right: 2px;
+      border-radius: 1px;
+    }
   </style>
 
   <div class="wrapper" style="background-color:${brand.bg};width:100%;margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
@@ -317,7 +379,7 @@ export function renderOrderConfirmationEmail(order: OrderForEmail) {
                     <a href="${escapeHtml(
                       websiteUrl
                     )}" style="display:inline-block;background:${brand.secondary};color:${brand.text};text-decoration:none;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-weight:800;font-size:13px;line-height:1;border-radius:999px;padding:14px 20px;">
-                      <img src="${globeIconBase64}" width="14" height="14" style="display:inline-block;vertical-align:middle;margin-right:6px;border:0;" alt="" />
+                      <span class="gg-website" style="--ggs:0.72;display:inline-block;vertical-align:middle;margin-right:8px;"></span>
                       Visit our website
                     </a>
                   </td>
@@ -325,7 +387,7 @@ export function renderOrderConfirmationEmail(order: OrderForEmail) {
                     <a href="${escapeHtml(
                       instagramUrl
                     )}" style="display:inline-block;background:${brand.accent};color:${brand.text};text-decoration:none;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-weight:800;font-size:13px;line-height:1;border:1px solid ${brand.border};border-radius:999px;padding:14px 20px;">
-                      <img src="${instagramIconBase64}" width="14" height="14" style="display:inline-block;vertical-align:middle;margin-right:6px;border:0;" alt="" />
+                      <span class="gg-instagram" style="--ggs:0.72;display:inline-block;vertical-align:middle;margin-right:8px;"></span>
                       Follow @${escapeHtml(instagramHandle)}
                     </a>
                   </td>

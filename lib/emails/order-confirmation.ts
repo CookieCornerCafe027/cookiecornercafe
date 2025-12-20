@@ -53,7 +53,7 @@ export function renderOrderConfirmationEmail(order: OrderForEmail) {
       ? order.price_paid.toFixed(2)
       : String(order.price_paid);
 
-  const subject = `Order confirmed — ${order.id}`;
+  const subject = "Cookie Corner Cafe — Order confirmed";
 
   const itemsHtml =
     items.length > 0
@@ -137,5 +137,3 @@ export function renderOrderConfirmationEmail(order: OrderForEmail) {
 
   return { subject, html, text: textLines.join("\n") };
 }
-
-

@@ -62,6 +62,18 @@ export function renderOrderConfirmationEmail(order: OrderForEmail) {
   const websiteUrl = "https://cookiecornercafe.ca";
   const instagramHandle = "cookie_cornercafe";
   const instagramUrl = `https://instagram.com/${instagramHandle}`;
+  const logoUrl = "https://cookiecornercafe.ca/android-chrome-192x192.png";
+
+  // Brand colors (from `app/globals.css`)
+  const brand = {
+    bg: "#fcd9e5", // --background
+    text: "#3d2315", // --foreground
+    muted: "#6b5447", // --muted-foreground
+    border: "#f5d5dd", // --border
+    secondary: "#ffb6c9", // --secondary
+    accent: "#ffd4e0", // --accent
+    card: "#ffffff",
+  } as const;
 
   const itemsRowsHtml =
     items.length > 0
@@ -70,11 +82,11 @@ export function renderOrderConfirmationEmail(order: OrderForEmail) {
             const name = escapeHtml(i.product_name ?? "Item");
             const qty = i.quantity ?? 1;
             const size = i.size
-              ? ` <span style="color:#6b7280;">(${escapeHtml(String(i.size))})</span>`
+              ? ` <span style="color:${brand.muted};">(${escapeHtml(String(i.size))})</span>`
               : "";
             const custom =
               i.customizations && i.customizations.length
-                ? `<div style="margin-top:4px;color:#6b7280;font-size:12px;line-height:1.4;">Customizations: ${escapeHtml(
+                ? `<div style="margin-top:4px;color:${brand.muted};font-size:12px;line-height:1.4;">Customizations: ${escapeHtml(
                     i.customizations.join(", ")
                   )}</div>`
                 : "";
@@ -87,19 +99,19 @@ export function renderOrderConfirmationEmail(order: OrderForEmail) {
 
             return `
               <tr>
-                <td style="padding:12px 0;border-top:1px solid #efe7dc;">
-                  <div style="font-weight:700;color:#2b1d10;font-size:14px;line-height:1.35;">
+                <td style="padding:12px 0;border-top:1px solid ${brand.border};">
+                  <div style="font-weight:700;color:${brand.text};font-size:14px;line-height:1.35;">
                     ${name}${size}
                   </div>
                   ${custom}
                 </td>
-                <td align="right" style="padding:12px 0;border-top:1px solid #efe7dc;color:#2b1d10;font-size:14px;white-space:nowrap;">
+                <td align="right" style="padding:12px 0;border-top:1px solid ${brand.border};color:${brand.text};font-size:14px;white-space:nowrap;">
                   ${qty}
                 </td>
-                <td align="right" style="padding:12px 0;border-top:1px solid #efe7dc;color:#2b1d10;font-size:14px;white-space:nowrap;">
+                <td align="right" style="padding:12px 0;border-top:1px solid ${brand.border};color:${brand.text};font-size:14px;white-space:nowrap;">
                   ${unit != null ? escapeHtml(formatUsd(unit)) : ""}
                 </td>
-                <td align="right" style="padding:12px 0;border-top:1px solid #efe7dc;color:#2b1d10;font-size:14px;white-space:nowrap;">
+                <td align="right" style="padding:12px 0;border-top:1px solid ${brand.border};color:${brand.text};font-size:14px;white-space:nowrap;">
                   ${lineTotal != null ? escapeHtml(formatUsd(lineTotal)) : ""}
                 </td>
               </tr>
@@ -108,7 +120,7 @@ export function renderOrderConfirmationEmail(order: OrderForEmail) {
           .join("")
       : `
           <tr>
-            <td colspan="4" style="padding:12px 0;border-top:1px solid #efe7dc;color:#6b7280;font-size:14px;">
+            <td colspan="4" style="padding:12px 0;border-top:1px solid ${brand.border};color:${brand.muted};font-size:14px;">
               (No item details available)
             </td>
           </tr>
@@ -118,9 +130,9 @@ export function renderOrderConfirmationEmail(order: OrderForEmail) {
     ? `
         <tr>
           <td style="padding:0 24px 20px 24px;">
-            <div style="border:1px solid #efe7dc;border-radius:12px;background:#fff7ed;padding:12px 14px;">
-              <div style="font-weight:700;color:#2b1d10;font-size:13px;margin:0 0 6px 0;">Notes</div>
-              <div style="color:#4b5563;font-size:13px;line-height:1.45;">${escapeHtml(
+            <div style="border:1px solid ${brand.border};border-radius:12px;background:${brand.accent};padding:12px 14px;">
+              <div style="font-weight:700;color:${brand.text};font-size:13px;margin:0 0 6px 0;">Notes</div>
+              <div style="color:${brand.muted};font-size:13px;line-height:1.45;">${escapeHtml(
                 order.notes
               )}</div>
             </div>
@@ -130,49 +142,69 @@ export function renderOrderConfirmationEmail(order: OrderForEmail) {
     : "";
 
   const html = `
-  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">
-    Your order is confirmed — ${escapeHtml(isDelivery ? "delivery" : "pickup")} on ${escapeHtml(
-      when
-    )}.
-  </div>
+  <style>
+    body, .wrapper { background-color: ${brand.bg} !important; margin: 0 !important; padding: 0 !important; width: 100% !important; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+  </style>
 
-  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#fbf7f2;margin:0;padding:0;">
-    <tr>
-      <td align="center" style="padding:28px 12px;">
-        <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="width:600px;max-width:600px;background:#ffffff;border:1px solid #efe7dc;border-radius:16px;overflow:hidden;">
+  <div class="wrapper" style="background-color:${brand.bg};width:100%;margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">
+      Your order is confirmed — ${escapeHtml(isDelivery ? "delivery" : "pickup")} on ${escapeHtml(
+        when
+      )}.
+    </div>
+
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:${brand.bg};margin:0;padding:0;min-height:100vh;">
+      <tr>
+        <td align="center" style="padding:28px 12px;background-color:${brand.bg};">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="width:600px;max-width:600px;background:${brand.card};border:1px solid ${brand.border};border-radius:16px;overflow:hidden;">
           <tr>
-            <td style="padding:22px 24px 16px 24px;background:#fff7ed;">
-              <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#7c4a1b;font-weight:800;letter-spacing:0.4px;font-size:16px;">
-                Cookie Corner Cafe
-              </div>
-              <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#2b1d10;font-weight:900;font-size:26px;line-height:1.15;margin-top:6px;">
-                Order confirmed
-              </div>
-              <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#4b5563;font-size:14px;line-height:1.45;margin-top:8px;">
-                Thanks, ${escapeHtml(order.customer_name)} — your payment was successful. We’ll start prepping your treats.
-              </div>
+            <td style="padding:22px 24px 16px 24px;background:${brand.accent};">
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td valign="top" width="44" style="padding:0 12px 0 0;">
+                    <img src="${escapeHtml(
+                      logoUrl
+                    )}" width="44" height="44" alt="Cookie Corner Cafe" style="display:block;border:0;outline:none;text-decoration:none;border-radius:12px;" />
+                  </td>
+                  <td valign="top">
+                    <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:${brand.text};font-weight:900;letter-spacing:0.2px;font-size:16px;">
+                      Cookie Corner Cafe
+                    </div>
+                    <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:${brand.text};font-weight:900;font-size:26px;line-height:1.15;margin-top:6px;">
+                      Order confirmed
+                    </div>
+                    <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:${brand.muted};font-size:14px;line-height:1.45;margin-top:8px;">
+                      Thanks, ${escapeHtml(
+                        order.customer_name
+                      )} — your payment was successful. We’ll start prepping your treats.
+                    </div>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
 
           <tr>
             <td style="padding:18px 24px 6px 24px;">
-              <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#2b1d10;font-weight:800;font-size:16px;margin:0 0 10px 0;">
+              <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:${brand.text};font-weight:800;font-size:16px;margin:0 0 10px 0;">
                 Order details
               </div>
-              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #efe7dc;border-radius:12px;background:#ffffff;">
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid ${brand.border};border-radius:12px;background:${brand.card};">
                 <tr>
-                  <td style="padding:12px 14px;border-bottom:1px solid #efe7dc;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-size:13px;color:#6b7280;">
+                  <td style="padding:12px 14px;border-bottom:1px solid ${brand.border};font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-size:13px;color:${brand.muted};">
                     Order ID
                   </td>
-                  <td align="right" style="padding:12px 14px;border-bottom:1px solid #efe7dc;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-size:13px;color:#2b1d10;font-weight:700;">
+                  <td align="right" style="padding:12px 14px;border-bottom:1px solid ${brand.border};font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-size:13px;color:${brand.text};font-weight:700;">
                     ${escapeHtml(order.id)}
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding:12px 14px;border-bottom:1px solid #efe7dc;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-size:13px;color:#6b7280;">
+                  <td style="padding:12px 14px;border-bottom:1px solid ${brand.border};font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-size:13px;color:${brand.muted};">
                     ${escapeHtml(isDelivery ? "Delivery time" : "Pickup time")}
                   </td>
-                  <td align="right" style="padding:12px 14px;border-bottom:1px solid #efe7dc;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-size:13px;color:#2b1d10;font-weight:700;">
+                  <td align="right" style="padding:12px 14px;border-bottom:1px solid ${brand.border};font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-size:13px;color:${brand.text};font-weight:700;">
                     ${escapeHtml(when)}
                   </td>
                 </tr>
@@ -180,10 +212,10 @@ export function renderOrderConfirmationEmail(order: OrderForEmail) {
                   isDelivery
                     ? `
                         <tr>
-                          <td style="padding:12px 14px;border-bottom:1px solid #efe7dc;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-size:13px;color:#6b7280;">
+                          <td style="padding:12px 14px;border-bottom:1px solid ${brand.border};font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-size:13px;color:${brand.muted};">
                             Delivery address
                           </td>
-                          <td align="right" style="padding:12px 14px;border-bottom:1px solid #efe7dc;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-size:13px;color:#2b1d10;font-weight:700;">
+                          <td align="right" style="padding:12px 14px;border-bottom:1px solid ${brand.border};font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-size:13px;color:${brand.text};font-weight:700;">
                             ${escapeHtml(order.delivery_address ?? "—")}
                           </td>
                         </tr>
@@ -191,10 +223,10 @@ export function renderOrderConfirmationEmail(order: OrderForEmail) {
                     : ""
                 }
                 <tr>
-                  <td style="padding:12px 14px;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-size:13px;color:#6b7280;">
+                  <td style="padding:12px 14px;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-size:13px;color:${brand.muted};">
                     Total paid
                   </td>
-                  <td align="right" style="padding:12px 14px;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-size:13px;color:#2b1d10;font-weight:900;">
+                  <td align="right" style="padding:12px 14px;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-size:13px;color:${brand.text};font-weight:900;">
                     $${escapeHtml(total)}
                   </td>
                 </tr>
@@ -204,24 +236,24 @@ export function renderOrderConfirmationEmail(order: OrderForEmail) {
 
           <tr>
             <td style="padding:12px 24px 8px 24px;">
-              <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#2b1d10;font-weight:800;font-size:16px;margin:0 0 10px 0;">
+              <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:${brand.text};font-weight:800;font-size:16px;margin:0 0 10px 0;">
                 Items
               </div>
               <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                 <tr>
                   <td style="padding:0 0 10px 0;">
-                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-top:1px solid #efe7dc;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-top:1px solid ${brand.border};">
                       <tr>
-                        <td style="padding:10px 0 8px 0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-size:12px;color:#6b7280;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;">
+                        <td style="padding:10px 0 8px 0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-size:12px;color:${brand.muted};font-weight:800;text-transform:uppercase;letter-spacing:0.06em;">
                           Item
                         </td>
-                        <td align="right" style="padding:10px 0 8px 0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-size:12px;color:#6b7280;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap;">
+                        <td align="right" style="padding:10px 0 8px 0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-size:12px;color:${brand.muted};font-weight:800;text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap;">
                           Qty
                         </td>
-                        <td align="right" style="padding:10px 0 8px 0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-size:12px;color:#6b7280;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap;">
+                        <td align="right" style="padding:10px 0 8px 0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-size:12px;color:${brand.muted};font-weight:800;text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap;">
                           Unit
                         </td>
-                        <td align="right" style="padding:10px 0 8px 0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-size:12px;color:#6b7280;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap;">
+                        <td align="right" style="padding:10px 0 8px 0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-size:12px;color:${brand.muted};font-weight:800;text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap;">
                           Total
                         </td>
                       </tr>
@@ -237,19 +269,19 @@ export function renderOrderConfirmationEmail(order: OrderForEmail) {
 
           <tr>
             <td style="padding:8px 24px 0 24px;">
-              <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#2b1d10;font-weight:800;font-size:16px;margin:0 0 10px 0;">
+              <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:${brand.text};font-weight:800;font-size:16px;margin:0 0 10px 0;">
                 What happens next
               </div>
-              <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#4b5563;font-size:13px;line-height:1.6;">
-                <div style="margin:0 0 8px 0;"><strong style="color:#2b1d10;">${escapeHtml(
+              <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:${brand.muted};font-size:13px;line-height:1.6;">
+                <div style="margin:0 0 8px 0;"><strong style="color:${brand.text};">${escapeHtml(
                   isDelivery ? "Delivery" : "Pickup"
                 )}:</strong> ${escapeHtml(
                   isDelivery
                     ? "We’ll prepare your order and bring it to the delivery address at your scheduled time."
                     : "We’ll prepare your order for pickup at your scheduled time."
                 )}</div>
-                <div style="margin:0 0 8px 0;"><strong style="color:#2b1d10;">Need to update something?</strong> Reply to this email and include your Order ID.</div>
-                <div style="margin:0;"><strong style="color:#2b1d10;">Want more treats?</strong> Browse seasonal specials and place another order anytime.</div>
+                <div style="margin:0 0 8px 0;"><strong style="color:${brand.text};">Need to update something?</strong> Reply to this email and include your Order ID.</div>
+                <div style="margin:0;"><strong style="color:${brand.text};">Want more treats?</strong> Browse seasonal specials and place another order anytime.</div>
               </div>
             </td>
           </tr>
@@ -261,14 +293,14 @@ export function renderOrderConfirmationEmail(order: OrderForEmail) {
                   <td style="padding-right:10px;">
                     <a href="${escapeHtml(
                       websiteUrl
-                    )}" style="display:inline-block;background:#7c4a1b;color:#ffffff;text-decoration:none;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-weight:800;font-size:13px;line-height:1;border-radius:999px;padding:12px 16px;">
+                    )}" style="display:inline-block;background:${brand.secondary};color:${brand.text};text-decoration:none;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-weight:800;font-size:13px;line-height:1;border-radius:999px;padding:12px 16px;">
                       Visit our website
                     </a>
                   </td>
                   <td>
                     <a href="${escapeHtml(
                       instagramUrl
-                    )}" style="display:inline-block;background:#fff7ed;color:#7c4a1b;text-decoration:none;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-weight:800;font-size:13px;line-height:1;border:1px solid #efe7dc;border-radius:999px;padding:12px 16px;">
+                    )}" style="display:inline-block;background:${brand.accent};color:${brand.text};text-decoration:none;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-weight:800;font-size:13px;line-height:1;border:1px solid ${brand.border};border-radius:999px;padding:12px 16px;">
                       Follow @${escapeHtml(instagramHandle)}
                     </a>
                   </td>
@@ -279,15 +311,15 @@ export function renderOrderConfirmationEmail(order: OrderForEmail) {
 
           <tr>
             <td style="padding:6px 24px 22px 24px;">
-              <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#6b7280;font-size:12px;line-height:1.6;">
+              <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:${brand.muted};font-size:12px;line-height:1.6;">
                 Links:
                 <a href="${escapeHtml(
                   websiteUrl
-                )}" style="color:#7c4a1b;text-decoration:underline;">cookiecornercafe.ca</a>
+                )}" style="color:${brand.text};text-decoration:underline;">cookiecornercafe.ca</a>
                 &nbsp;•&nbsp;
                 <a href="${escapeHtml(
                   instagramUrl
-                )}" style="color:#7c4a1b;text-decoration:underline;">@${escapeHtml(
+                )}" style="color:${brand.text};text-decoration:underline;">@${escapeHtml(
                   instagramHandle
                 )}</a>
               </div>
@@ -300,6 +332,7 @@ export function renderOrderConfirmationEmail(order: OrderForEmail) {
       </td>
     </tr>
   </table>
+  </div>
   `.trim();
 
   const textLines = [

@@ -64,6 +64,14 @@ export function renderOrderConfirmationEmail(order: OrderForEmail) {
   const instagramUrl = `https://instagram.com/${instagramHandle}`;
   const logoUrl = "https://cookiecornercafe.ca/android-chrome-192x192.png";
 
+  // Base64 Globe Icon for Website
+  const globeIconBase64 =
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEwEAmpwYAAABy0lEQVR4nO2Vv0vDQRSFv6S1SUpAsS6CInZpEMWpCIid7Iid/As6iX9AJ3XpLOrgIunSwaEIdXByEAdBByuIdXByUHCpS96ToS8pSdrS6pIOfuFw793v3r1338ckSUKSlS6wA+wAh8AR8ATcg8qOAt88O6U8U9uAnH9LAb2v8Y6rR8AdkAHeK7Xl656O7oEq0AVmY8Y7rQvMA0uA6y2AnUoD69YlXpE6wDLQD27Yf6A3fD8BfN8D9mB/fA3Ym9FhM38U9pI/YQ+oY98R28MvCrtPH7CH9DHwDrsV2L3A7tNfS4F9KLAXAnsqsA8E9lRgTwX2qcDqBfb5D+w/1j8S2Isf2A7Y6wS2A/YugfVgeyrA7mB7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8/wH6L7EfgL0P/AAAAABJRU5ErkJggg==";
+
+  // Base64 Instagram Icon
+  const instagramIconBase64 =
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEwEAmpwYAAABmElEQVR4nO2Vv0vDUBDHv0mrlSqiOIsIDm6C4uYf0En9Ax06uVgnR0cn/QOdunQIdXBy6CIIdXByEAdBB6uIdXBykL70PQ76kpKkLa0u6eAXDve9977v3r1338ckSUKSlS6wA+wAh8AR8ATcg8qOAt88O6U8U9uAnH9LAb2v8Y6rR8AdkAHeK7Xl656O7oEq0AVmY8Y7rQvMA0uA6y2AnUoD69YlXpE6wDLQD27Yf6A3fD8BfN8D9mB/fA3Ym9FhM38U9pI/YQ+oY98R28MvCrtPH7CH9DHwDrsV2L3A7tNfS4F9KLAXAnsqsA8E9lRgTwX2qcDqBfb5D+w/1j8S2Isf2A7Y6wS2A/YugfVgeyrA7mB7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8S2B7KrB76p6C6p8E7K4C7IK6n6O8v6O8/wH6L7EfgL0P/AAAAABJRU5ErkJggg==";
+
   // Brand colors (from `app/globals.css`)
   const brand = {
     bg: "#fcd9e5", // --background
@@ -157,10 +165,10 @@ export function renderOrderConfirmationEmail(order: OrderForEmail) {
 
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:${brand.bg};margin:0;padding:0;min-height:100vh;">
       <tr>
-        <td align="center" style="padding:28px 12px;background-color:${brand.bg};">
-          <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="width:600px;max-width:600px;background:${brand.card};border:1px solid ${brand.border};border-radius:16px;overflow:hidden;">
-          <tr>
-            <td style="padding:22px 24px 16px 24px;background:${brand.accent};">
+        <td align="center" style="padding:60px 12px;background-color:${brand.bg};">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="width:600px;max-width:600px;background:${brand.card};border:1px solid ${brand.border};border-radius:16px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.05);">
+            <tr>
+              <td style="padding:32px 32px 24px 32px;background:${brand.accent};">
               <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                 <tr>
                   <td valign="top" width="44" style="padding:0 12px 0 0;">
@@ -187,8 +195,8 @@ export function renderOrderConfirmationEmail(order: OrderForEmail) {
           </tr>
 
           <tr>
-            <td style="padding:18px 24px 6px 24px;">
-              <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:${brand.text};font-weight:800;font-size:16px;margin:0 0 10px 0;">
+            <td style="padding:24px 32px 6px 32px;">
+              <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:${brand.text};font-weight:800;font-size:16px;margin:0 0 12px 0;">
                 Order details
               </div>
               <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid ${brand.border};border-radius:12px;background:${brand.card};">
@@ -235,8 +243,8 @@ export function renderOrderConfirmationEmail(order: OrderForEmail) {
           </tr>
 
           <tr>
-            <td style="padding:12px 24px 8px 24px;">
-              <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:${brand.text};font-weight:800;font-size:16px;margin:0 0 10px 0;">
+            <td style="padding:20px 32px 8px 32px;">
+              <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:${brand.text};font-weight:800;font-size:16px;margin:0 0 12px 0;">
                 Items
               </div>
               <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
@@ -265,11 +273,26 @@ export function renderOrderConfirmationEmail(order: OrderForEmail) {
             </td>
           </tr>
 
-          ${notesBlock}
+          ${
+            order.notes
+              ? `
+                <tr>
+                  <td style="padding:0 32px 24px 32px;">
+                    <div style="border:1px solid ${brand.border};border-radius:12px;background:${brand.accent};padding:14px 16px;">
+                      <div style="font-weight:700;color:${brand.text};font-size:13px;margin:0 0 6px 0;">Notes</div>
+                      <div style="color:${brand.muted};font-size:13px;line-height:1.45;">${escapeHtml(
+                        order.notes
+                      )}</div>
+                    </div>
+                  </td>
+                </tr>
+              `.trim()
+              : ""
+          }
 
           <tr>
-            <td style="padding:8px 24px 0 24px;">
-              <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:${brand.text};font-weight:800;font-size:16px;margin:0 0 10px 0;">
+            <td style="padding:16px 32px 0 32px;border-top:1px solid ${brand.border};">
+              <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:${brand.text};font-weight:800;font-size:16px;margin:0 0 12px 0;">
                 What happens next
               </div>
               <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:${brand.muted};font-size:13px;line-height:1.6;">
@@ -287,20 +310,22 @@ export function renderOrderConfirmationEmail(order: OrderForEmail) {
           </tr>
 
           <tr>
-            <td style="padding:14px 24px 10px 24px;">
+            <td style="padding:24px 32px 16px 32px;">
               <table role="presentation" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td style="padding-right:10px;">
+                  <td style="padding-right:12px;">
                     <a href="${escapeHtml(
                       websiteUrl
-                    )}" style="display:inline-block;background:${brand.secondary};color:${brand.text};text-decoration:none;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-weight:800;font-size:13px;line-height:1;border-radius:999px;padding:12px 16px;">
+                    )}" style="display:inline-block;background:${brand.secondary};color:${brand.text};text-decoration:none;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-weight:800;font-size:13px;line-height:1;border-radius:999px;padding:14px 20px;">
+                      <img src="${globeIconBase64}" width="14" height="14" style="display:inline-block;vertical-align:middle;margin-right:6px;border:0;" alt="" />
                       Visit our website
                     </a>
                   </td>
                   <td>
                     <a href="${escapeHtml(
                       instagramUrl
-                    )}" style="display:inline-block;background:${brand.accent};color:${brand.text};text-decoration:none;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-weight:800;font-size:13px;line-height:1;border:1px solid ${brand.border};border-radius:999px;padding:12px 16px;">
+                    )}" style="display:inline-block;background:${brand.accent};color:${brand.text};text-decoration:none;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-weight:800;font-size:13px;line-height:1;border:1px solid ${brand.border};border-radius:999px;padding:14px 20px;">
+                      <img src="${instagramIconBase64}" width="14" height="14" style="display:inline-block;vertical-align:middle;margin-right:6px;border:0;" alt="" />
                       Follow @${escapeHtml(instagramHandle)}
                     </a>
                   </td>
@@ -310,7 +335,7 @@ export function renderOrderConfirmationEmail(order: OrderForEmail) {
           </tr>
 
           <tr>
-            <td style="padding:6px 24px 22px 24px;">
+            <td style="padding:12px 32px 40px 32px;">
               <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:${brand.muted};font-size:12px;line-height:1.6;">
                 Links:
                 <a href="${escapeHtml(

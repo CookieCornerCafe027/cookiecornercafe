@@ -59,6 +59,9 @@ export function renderOrderConfirmationEmail(order: OrderForEmail) {
       : String(order.price_paid);
 
   const subject = "Cookie Corner Cafe — Order confirmed";
+  const websiteUrl = "https://cookiecornercafe.ca";
+  const instagramHandle = "cookie_cornercafe";
+  const instagramUrl = `https://instagram.com/${instagramHandle}`;
 
   const itemsRowsHtml =
     items.length > 0
@@ -233,12 +236,63 @@ export function renderOrderConfirmationEmail(order: OrderForEmail) {
           ${notesBlock}
 
           <tr>
-            <td style="padding:6px 24px 22px 24px;">
-              <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#6b7280;font-size:12px;line-height:1.5;">
-                Questions or changes? Just reply to this email and we’ll help out.
+            <td style="padding:8px 24px 0 24px;">
+              <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#2b1d10;font-weight:800;font-size:16px;margin:0 0 10px 0;">
+                What happens next
               </div>
-              <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#9ca3af;font-size:12px;line-height:1.5;margin-top:8px;">
-                Cookie Corner Cafe
+              <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#4b5563;font-size:13px;line-height:1.6;">
+                <div style="margin:0 0 8px 0;"><strong style="color:#2b1d10;">${escapeHtml(
+                  isDelivery ? "Delivery" : "Pickup"
+                )}:</strong> ${escapeHtml(
+                  isDelivery
+                    ? "We’ll prepare your order and bring it to the delivery address at your scheduled time."
+                    : "We’ll prepare your order for pickup at your scheduled time."
+                )}</div>
+                <div style="margin:0 0 8px 0;"><strong style="color:#2b1d10;">Need to update something?</strong> Reply to this email and include your Order ID.</div>
+                <div style="margin:0;"><strong style="color:#2b1d10;">Want more treats?</strong> Browse seasonal specials and place another order anytime.</div>
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:14px 24px 10px 24px;">
+              <table role="presentation" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="padding-right:10px;">
+                    <a href="${escapeHtml(
+                      websiteUrl
+                    )}" style="display:inline-block;background:#7c4a1b;color:#ffffff;text-decoration:none;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-weight:800;font-size:13px;line-height:1;border-radius:999px;padding:12px 16px;">
+                      Visit our website
+                    </a>
+                  </td>
+                  <td>
+                    <a href="${escapeHtml(
+                      instagramUrl
+                    )}" style="display:inline-block;background:#fff7ed;color:#7c4a1b;text-decoration:none;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-weight:800;font-size:13px;line-height:1;border:1px solid #efe7dc;border-radius:999px;padding:12px 16px;">
+                      Follow @${escapeHtml(instagramHandle)}
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:6px 24px 22px 24px;">
+              <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#6b7280;font-size:12px;line-height:1.6;">
+                Links:
+                <a href="${escapeHtml(
+                  websiteUrl
+                )}" style="color:#7c4a1b;text-decoration:underline;">cookiecornercafe.ca</a>
+                &nbsp;•&nbsp;
+                <a href="${escapeHtml(
+                  instagramUrl
+                )}" style="color:#7c4a1b;text-decoration:underline;">@${escapeHtml(
+                  instagramHandle
+                )}</a>
+              </div>
+              <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#9ca3af;font-size:12px;line-height:1.6;margin-top:8px;">
+                Cookie Corner Cafe — made with care, baked with love.
               </div>
             </td>
           </tr>
@@ -288,6 +342,16 @@ export function renderOrderConfirmationEmail(order: OrderForEmail) {
         })
       : ["- (No item details available)"]),
     ...(order.notes ? ["", `Notes: ${order.notes}`] : []),
+    "",
+    "What happens next:",
+    isDelivery
+      ? "- Delivery: We’ll prepare your order and bring it to the delivery address at your scheduled time."
+      : "- Pickup: We’ll prepare your order for pickup at your scheduled time.",
+    "- Need to update something? Reply to this email and include your Order ID.",
+    "",
+    "Links:",
+    `Website: ${websiteUrl}`,
+    `Instagram: @${instagramHandle} (${instagramUrl})`,
     "",
     "Questions? Reply to this email.",
   ];

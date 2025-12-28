@@ -7,6 +7,10 @@ import {
   renderOrderConfirmationEmail,
   type OrderForEmail,
 } from "@/lib/emails/order-confirmation";
+import {
+  renderEventRegistrationEmail,
+  type EventRegistrationForEmail,
+} from "@/lib/emails/event-registration-confirmation";
 
 export const runtime = "nodejs";
 
@@ -78,6 +82,18 @@ export async function POST(req: Request) {
         return NextResponse.json({ received: true });
       }
 
+      // Load registration with event details (for email) and idempotency.
+      const { data: registration, error: regError } = await supabase
+        .from("event_registrations")
+        .select(
+          "id,customer_name,customer_email,customer_phone,quantity,price_paid,status,confirmation_email_sent_at,event:events(id,title,starts_at,location)"
+        )
+        .eq("id", eventRegistrationId)
+        .maybeSingle();
+      if (regError) {
+        return NextResponse.json({ error: regError.message }, { status: 500 });
+      }
+
       const { error: confirmError } = await supabase
         .from("event_registrations")
         .update({ status: "confirmed" })
@@ -87,6 +103,58 @@ export async function POST(req: Request) {
           { error: confirmError.message },
           { status: 500 }
         );
+      }
+
+      // Send confirmation email once.
+      const emailAlreadySent = Boolean(
+        (registration as any)?.confirmation_email_sent_at
+      );
+      const hasResendConfig = Boolean(
+        process.env.RESEND_API_KEY && process.env.ORDER_NOTIFICATION_EMAIL
+      );
+      if (registration && !emailAlreadySent && hasResendConfig) {
+        try {
+          const resend = getResend();
+          const from = getResendFrom();
+          const { subject, html, text } = renderEventRegistrationEmail(
+            registration as unknown as EventRegistrationForEmail
+          );
+
+          const adminNotify = process.env.ORDER_NOTIFICATION_EMAIL;
+          const bcc = adminNotify ? [adminNotify] : undefined;
+
+          const result = await resend.emails.send({
+            from,
+            to: (registration as any).customer_email,
+            subject,
+            html,
+            text,
+            bcc,
+          });
+
+          if (result.error) {
+            return NextResponse.json(
+              { error: result.error.message },
+              { status: 500 }
+            );
+          }
+
+          const { error: sentAtError } = await supabase
+            .from("event_registrations")
+            .update({ confirmation_email_sent_at: new Date().toISOString() })
+            .eq("id", eventRegistrationId)
+            .is("confirmation_email_sent_at", null);
+          if (sentAtError) {
+            return NextResponse.json(
+              { error: sentAtError.message },
+              { status: 500 }
+            );
+          }
+        } catch (err: any) {
+          const message =
+            err?.message ?? "Failed to send event confirmation email";
+          return NextResponse.json({ error: message }, { status: 500 });
+        }
       }
 
       return NextResponse.json({ received: true });

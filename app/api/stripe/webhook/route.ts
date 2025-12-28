@@ -109,9 +109,7 @@ export async function POST(req: Request) {
       const emailAlreadySent = Boolean(
         (registration as any)?.confirmation_email_sent_at
       );
-      const hasResendConfig = Boolean(
-        process.env.RESEND_API_KEY && process.env.ORDER_NOTIFICATION_EMAIL
-      );
+      const hasResendConfig = Boolean(process.env.RESEND_API_KEY);
       if (registration && !emailAlreadySent && hasResendConfig) {
         try {
           const resend = getResend();
@@ -230,9 +228,7 @@ export async function POST(req: Request) {
         (order as any)?.confirmation_email_sent_at
       );
       if (order && !emailAlreadySent) {
-        const hasResendConfig = Boolean(
-          process.env.RESEND_API_KEY && process.env.ORDER_NOTIFICATION_EMAIL
-        );
+        const hasResendConfig = Boolean(process.env.RESEND_API_KEY);
         if (hasResendConfig) {
           try {
             const resend = getResend();

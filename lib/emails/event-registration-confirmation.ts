@@ -1,5 +1,3 @@
-"use client";
-
 export interface EventRegistrationForEmail {
   id: string;
   customer_name: string;

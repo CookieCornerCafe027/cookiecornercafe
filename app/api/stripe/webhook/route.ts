@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 
 import { getStripe } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getResend, getResendFrom } from "@/lib/resend";
+import {
+  getAdminNotificationEmails,
+  getResend,
+  getResendFrom,
+} from "@/lib/resend";
 import {
   renderOrderConfirmationEmail,
   type OrderForEmail,
@@ -118,8 +122,7 @@ export async function POST(req: Request) {
             registration as unknown as EventRegistrationForEmail
           );
 
-          const adminNotify = process.env.ORDER_NOTIFICATION_EMAIL;
-          const bcc = adminNotify ? [adminNotify] : undefined;
+          const bcc = getAdminNotificationEmails();
 
           const result = await resend.emails.send({
             from,
@@ -237,8 +240,7 @@ export async function POST(req: Request) {
               order as OrderForEmail
             );
 
-            const adminNotify = process.env.ORDER_NOTIFICATION_EMAIL;
-            const bcc = adminNotify ? [adminNotify] : undefined;
+            const bcc = getAdminNotificationEmails();
 
             const result = await resend.emails.send({
               from,

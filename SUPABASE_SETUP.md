@@ -48,8 +48,11 @@ This guide will help you initialize Supabase for the Cookie Corner Cafe project.
 5. Add Resend credentials (server-only, used by Stripe webhook to email the customer after successful payment):
    ```
    RESEND_API_KEY=re_...
-   # Used as the Resend sender address (and also used to BCC confirmations to your internal inbox)
+   # Used as the Resend sender address
    ORDER_NOTIFICATION_EMAIL=orders@yourdomain.com
+   # Admin notifications (BCC). Defaults to hello@cookiecornercafe.ca if not set.
+   # You can provide multiple comma-separated emails.
+   ADMIN_NOTIFICATION_EMAILS=hello@cookiecornercafe.ca
    ```
 
 ### Step 4: Run Database Migrations

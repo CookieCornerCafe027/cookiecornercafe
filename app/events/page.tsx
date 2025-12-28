@@ -9,6 +9,8 @@ export default async function EventsPage() {
     .from("events")
     .select("*")
     .eq("is_active", true)
+    // Show upcoming events first (falls back to created_at if starts_at is null)
+    .order("starts_at", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: false })
 
   if (error) {

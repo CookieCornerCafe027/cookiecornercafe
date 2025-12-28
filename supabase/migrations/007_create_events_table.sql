@@ -22,6 +22,13 @@ create policy "events_select_public"
   on public.events for select
   using (is_active = true);
 
+-- Authenticated users (admin) can view all events (including inactive)
+drop policy if exists "events_select_auth" on public.events;
+create policy "events_select_auth"
+  on public.events for select
+  to authenticated
+  using (true);
+
 -- Only authenticated users can insert events (admin functionality)
 drop policy if exists "events_insert_auth" on public.events;
 create policy "events_insert_auth"

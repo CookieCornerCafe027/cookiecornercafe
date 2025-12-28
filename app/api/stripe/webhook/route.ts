@@ -55,7 +55,44 @@ export async function POST(req: Request) {
   if (isCheckoutPaidEvent || isCheckoutFailedEvent) {
     const session = event.data.object as any;
     const orderId = session?.metadata?.orderId;
+    const eventRegistrationId = session?.metadata?.eventRegistrationId;
 
+    // --- Event registrations (tickets) ---
+    if (eventRegistrationId) {
+      const supabase = createAdminClient();
+
+      // Best-effort: store Stripe session id for reconciliation / debugging.
+      await supabase
+        .from("event_registrations")
+        .update({ stripe_session_id: session?.id })
+        .eq("id", eventRegistrationId);
+
+      if (isCheckoutFailedEvent) {
+        return NextResponse.json({ received: true });
+      }
+
+      const paymentStatus = (session?.payment_status ?? "").toString();
+      const isPaid =
+        paymentStatus === "paid" || paymentStatus === "no_payment_required";
+      if (!isPaid) {
+        return NextResponse.json({ received: true });
+      }
+
+      const { error: confirmError } = await supabase
+        .from("event_registrations")
+        .update({ status: "confirmed" })
+        .eq("id", eventRegistrationId);
+      if (confirmError) {
+        return NextResponse.json(
+          { error: confirmError.message },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({ received: true });
+    }
+
+    // --- Product orders ---
     if (orderId) {
       const supabase = createAdminClient();
 

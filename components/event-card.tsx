@@ -19,10 +19,13 @@ export interface EventForCard {
   price_per_entry: number;
   capacity: number | null;
   location: string | null;
+  starts_at: string | null;
+  ends_at: string | null;
 }
 
 export function EventCard({ event }: { event: EventForCard }) {
   const primaryImage = event.image_urls?.[0];
+  const startLabel = event.starts_at ? new Date(event.starts_at).toLocaleString() : null;
 
   return (
     <Card className="relative overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col pt-0">
@@ -67,6 +70,11 @@ export function EventCard({ event }: { event: EventForCard }) {
               </Badge>
             ) : null}
           </div>
+          {startLabel ? (
+            <p className="text-xs text-muted-foreground">{startLabel}</p>
+          ) : (
+            <p className="text-xs text-muted-foreground">Date/time: TBD</p>
+          )}
           {event.description ? (
             <CardDescription className="line-clamp-2">
               {event.description}

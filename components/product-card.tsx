@@ -104,7 +104,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
           </div>
         )}
 
-        <CardHeader>
+        <CardHeader className="mt-2">
           <div className="flex items-start justify-between gap-2">
             <CardTitle className="text-lg leading-tight">
               {product.name}

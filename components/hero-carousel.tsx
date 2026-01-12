@@ -105,8 +105,8 @@ export function HeroCarousel({ products, events }: HeroCarouselProps) {
 
   return (
     <section className="relative min-h-[calc(100vh-4rem)] flex items-center justify-center overflow-hidden">
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="max-w-6xl mx-auto">
+      <div className="w-full md:container md:mx-auto md:px-4 relative z-10">
+        <div className="w-full md:max-w-6xl md:mx-auto">
           {/* Main carousel content */}
           <div className="relative">
             <div className="relative h-[500px] md:h-[550px]">
@@ -121,7 +121,7 @@ export function HeroCarousel({ products, events }: HeroCarouselProps) {
                   )}
                 >
                   {/* Card with angled divider */}
-                  <div className="relative bg-card/95 backdrop-blur-lg rounded-3xl overflow-hidden shadow-2xl border-2 border-border/30 mx-auto max-w-5xl h-full">
+                  <div className="relative bg-card/95 backdrop-blur-lg rounded-none md:rounded-3xl overflow-hidden shadow-2xl border-2 border-border/30 mx-auto w-full md:max-w-7xl h-full">
                   <div className="grid md:grid-cols-2 h-full">
                     {/* Image Side with angled edge */}
                     <div className="relative order-1 md:order-1 h-full">

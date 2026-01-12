@@ -10,6 +10,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { getOptimizedImageUrl } from "@/lib/utils";
 
 interface SizeOption {
   label: string;
@@ -74,7 +75,11 @@ export function ProductDetail({ product }: ProductDetailProps) {
     sizeOptions.length > 0 ? sizeOptions[0].index : null
   );
 
-  const images = product.image_urls || [];
+  const rawImages = product.image_urls || [];
+  const images =
+    rawImages.map((url) =>
+      getOptimizedImageUrl(url, { width: 1400, quality: 78, format: "webp" }) ?? url
+    );
   const hasMultipleImages = images.length > 1;
 
   const nextImage = () => {
@@ -183,26 +188,35 @@ export function ProductDetail({ product }: ProductDetailProps) {
             {/* Thumbnail navigation */}
             {hasMultipleImages && (
               <div className="grid grid-cols-4 gap-2">
-                {images.map((image, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentImageIndex(index)}
-                    className={`aspect-square relative bg-muted rounded-lg overflow-hidden border-2 transition-all ${
-                      index === currentImageIndex
-                        ? "border-primary ring-2 ring-primary/20"
-                        : "border-transparent hover:border-primary/50"
-                    }`}
-                  >
-                    <Image
-                      src={image}
-                      alt={`Thumbnail ${index + 1}`}
-                      fill
-                      sizes="(max-width: 768px) 20vw, 10vw"
-                      className="object-cover"
-                      loading="lazy"
-                    />
-                  </button>
-                ))}
+                {rawImages.map((image, index) => {
+                  const thumbnailUrl =
+                    getOptimizedImageUrl(image, {
+                      width: 320,
+                      quality: 70,
+                      format: "webp",
+                    }) ?? image;
+
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentImageIndex(index)}
+                      className={`aspect-square relative bg-muted rounded-lg overflow-hidden border-2 transition-all ${
+                        index === currentImageIndex
+                          ? "border-primary ring-2 ring-primary/20"
+                          : "border-transparent hover:border-primary/50"
+                      }`}
+                    >
+                      <Image
+                        src={thumbnailUrl}
+                        alt={`Thumbnail ${index + 1}`}
+                        fill
+                        sizes="(max-width: 768px) 20vw, 10vw"
+                        className="object-cover"
+                        loading="lazy"
+                      />
+                    </button>
+                  );
+                })}
               </div>
             )}
           </>

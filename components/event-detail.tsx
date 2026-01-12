@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { getOptimizedImageUrl } from "@/lib/utils";
 
 export interface EventForDetail {
   id: string;
@@ -33,7 +34,11 @@ export interface EventForDetail {
 export function EventDetail({ event }: { event: EventForDetail }) {
   const { toast } = useToast();
   const router = useRouter();
-  const images = event.image_urls || [];
+  const rawImages = event.image_urls || [];
+  const images =
+    rawImages.map((url) =>
+      getOptimizedImageUrl(url, { width: 1400, quality: 78, format: "webp" }) ?? url
+    );
   const hasMultipleImages = images.length > 1;
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const startDate = event.starts_at ? new Date(event.starts_at) : null;
@@ -146,27 +151,36 @@ export function EventDetail({ event }: { event: EventForDetail }) {
 
           {hasMultipleImages && (
             <div className="grid grid-cols-5 gap-2">
-              {images.slice(0, 5).map((url, idx) => (
-                <button
-                  key={url}
-                  type="button"
-                  onClick={() => setCurrentImageIndex(idx)}
-                  className={`relative aspect-square overflow-hidden rounded-md border ${
-                    idx === currentImageIndex
-                      ? "border-primary"
-                      : "border-border"
-                  }`}
-                  aria-label={`View image ${idx + 1}`}
-                >
-                  <Image
-                    src={url}
-                    alt={`${event.title} thumbnail ${idx + 1}`}
-                    fill
-                    sizes="80px"
-                    className="object-cover"
-                  />
-                </button>
-              ))}
+              {rawImages.slice(0, 5).map((url, idx) => {
+                const thumbnailUrl =
+                  getOptimizedImageUrl(url, {
+                    width: 320,
+                    quality: 70,
+                    format: "webp",
+                  }) ?? url;
+
+                return (
+                  <button
+                    key={url}
+                    type="button"
+                    onClick={() => setCurrentImageIndex(idx)}
+                    className={`relative aspect-square overflow-hidden rounded-md border ${
+                      idx === currentImageIndex
+                        ? "border-primary"
+                        : "border-border"
+                    }`}
+                    aria-label={`View image ${idx + 1}`}
+                  >
+                    <Image
+                      src={thumbnailUrl}
+                      alt={`${event.title} thumbnail ${idx + 1}`}
+                      fill
+                      sizes="80px"
+                      className="object-cover"
+                    />
+                  </button>
+                );
+              })}
             </div>
           )}
 

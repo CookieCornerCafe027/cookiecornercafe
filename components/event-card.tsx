@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { getOptimizedImageUrl } from "@/lib/utils";
 
 import {
   Card,
@@ -24,7 +25,11 @@ export interface EventForCard {
 }
 
 export function EventCard({ event }: { event: EventForCard }) {
-  const primaryImage = event.image_urls?.[0];
+  const primaryImage = getOptimizedImageUrl(event.image_urls?.[0], {
+    width: 900,
+    quality: 75,
+    format: "webp",
+  });
   const startLabel = event.starts_at ? new Date(event.starts_at).toLocaleString() : null;
 
   return (

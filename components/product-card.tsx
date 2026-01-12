@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { getOptimizedImageUrl } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -62,7 +63,11 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
   }
 
   // Use first image as primary image
-  const primaryImage = product.image_urls?.[0];
+  const primaryImage = getOptimizedImageUrl(product.image_urls?.[0], {
+    width: 900,
+    quality: 75,
+    format: "webp",
+  });
 
   return (
     <Card className="relative overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col pt-0">

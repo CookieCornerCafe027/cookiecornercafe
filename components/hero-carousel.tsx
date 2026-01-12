@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { ChevronLeft, ChevronRight, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import { cn, getOptimizedImageUrl } from "@/lib/utils"
 import Image from "next/image"
 import Link from "next/link"
 
@@ -42,7 +42,11 @@ export function HeroCarousel({ products, events }: HeroCarouselProps) {
         id: event.id,
         title: event.title,
         description: event.description || "Join us for a special event",
-        imageUrl: event.image_urls?.[0] || "/placeholder.jpg",
+        imageUrl: getOptimizedImageUrl(event.image_urls?.[0], {
+          width: 1600,
+          quality: 78,
+          format: "webp",
+        }) || "/placeholder.jpg",
         eventDate: startDate?.toISOString().split('T')[0] || null,
         eventTime: startDate ? startDate.toLocaleTimeString("en-US", { 
           hour: "numeric", 
@@ -58,7 +62,11 @@ export function HeroCarousel({ products, events }: HeroCarouselProps) {
       id: product.id,
       title: product.name,
       description: product.description || "Delicious handcrafted treats",
-      imageUrl: product.image_urls?.[0] || "/placeholder.jpg",
+      imageUrl: getOptimizedImageUrl(product.image_urls?.[0], {
+        width: 1600,
+        quality: 78,
+        format: "webp",
+      }) || "/placeholder.jpg",
       accent: "🍰",
     })),
   ]
@@ -116,7 +124,7 @@ export function HeroCarousel({ products, events }: HeroCarouselProps) {
                   <div className="relative bg-card/95 backdrop-blur-lg rounded-3xl overflow-hidden shadow-2xl border-2 border-border/30 mx-auto max-w-5xl h-full">
                   <div className="grid md:grid-cols-2 h-full">
                     {/* Image Side with angled edge */}
-                    <div className="relative order-2 md:order-1 h-[250px] md:h-full">
+                    <div className="relative order-1 md:order-1 h-full">
                       {/* Angled divider overlay */}
                       <div 
                         className="hidden md:block absolute top-0 right-0 h-full w-8 bg-card z-10"
@@ -129,18 +137,90 @@ export function HeroCarousel({ products, events }: HeroCarouselProps) {
                           src={slide.imageUrl}
                           alt={slide.title}
                           fill
-                          className="object-cover"
-                          style={{
-                            clipPath: "polygon(0 0, 100% 0, 94% 100%, 0 100%)"
-                          }}
+                          className="object-cover md:[clip-path:polygon(0_0,_100%_0,_94%_100%,_0_100%)]"
                           sizes="(max-width: 768px) 100vw, 50vw"
                           priority={index === 0}
                         />
                       </div>
+
+                      {/* Mobile nav overlay (keep desktop arrows outside the card) */}
+                      <div className="md:hidden absolute inset-x-0 top-1/2 -translate-y-1/2 px-3 flex items-center justify-between z-20 pointer-events-none">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="pointer-events-auto rounded-full h-11 w-11 bg-card/80 backdrop-blur hover:bg-card shadow-lg"
+                          onClick={() => {
+                            prevSlide()
+                            setIsAutoPlaying(false)
+                          }}
+                          aria-label="Previous slide"
+                        >
+                          <ChevronLeft className="h-6 w-6" />
+                        </Button>
+
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="pointer-events-auto rounded-full h-11 w-11 bg-card/80 backdrop-blur hover:bg-card shadow-lg"
+                          onClick={() => {
+                            nextSlide()
+                            setIsAutoPlaying(false)
+                          }}
+                          aria-label="Next slide"
+                        >
+                          <ChevronRight className="h-6 w-6" />
+                        </Button>
+                      </div>
+
+                      {/* Mobile CTA overlay (hide all other content on mobile) */}
+                      <div className="md:hidden absolute inset-x-0 bottom-0 z-20">
+                        <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/60 to-transparent" />
+                        <div className="relative px-4 pb-4 pt-10">
+                          <div className="flex flex-col gap-2">
+                            {slide.type === "event" ? (
+                              <>
+                                <Button
+                                  size="lg"
+                                  className="w-full text-base px-6 py-5 rounded-full shadow-lg hover:shadow-xl transition-all"
+                                  asChild
+                                >
+                                  <Link href={`/events/${slide.id}`}>Book Now</Link>
+                                </Button>
+                                <Button
+                                  size="lg"
+                                  variant="outline"
+                                  className="w-full text-base px-6 py-5 rounded-full bg-card/70 backdrop-blur shadow-lg hover:shadow-xl transition-all"
+                                  asChild
+                                >
+                                  <Link href="/events">All Events</Link>
+                                </Button>
+                              </>
+                            ) : (
+                              <>
+                                <Button
+                                  size="lg"
+                                  className="w-full text-base px-6 py-5 rounded-full shadow-lg hover:shadow-xl transition-all"
+                                  asChild
+                                >
+                                  <Link href={`/product/${slide.id}`}>Order Now</Link>
+                                </Button>
+                                <Button
+                                  size="lg"
+                                  variant="outline"
+                                  className="w-full text-base px-6 py-5 rounded-full bg-card/70 backdrop-blur shadow-lg hover:shadow-xl transition-all"
+                                  asChild
+                                >
+                                  <Link href="#creations">View Menu</Link>
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Content Side */}
-                    <div className="order-1 md:order-2 p-8 md:p-12 flex flex-col justify-center space-y-3 md:space-y-4 overflow-hidden">
+                    <div className="hidden md:flex order-2 md:order-2 p-8 md:p-12 flex-col justify-center space-y-3 md:space-y-4 overflow-hidden">
                       {/* Event Badge - Reserve space even when not shown */}
                       <div className="h-[42px] flex items-start">
                         {slide.type === "event" && (slide.eventDate || slide.eventTime) && (
@@ -241,7 +321,7 @@ export function HeroCarousel({ products, events }: HeroCarouselProps) {
       <Button
         variant="ghost"
         size="icon"
-        className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full h-14 w-14 bg-card/80 backdrop-blur hover:bg-card shadow-lg z-20"
+        className="hidden md:inline-flex absolute left-4 top-1/2 -translate-y-1/2 rounded-full h-14 w-14 bg-card/80 backdrop-blur hover:bg-card shadow-lg z-20"
         onClick={() => {
           prevSlide()
           setIsAutoPlaying(false)
@@ -254,7 +334,7 @@ export function HeroCarousel({ products, events }: HeroCarouselProps) {
       <Button
         variant="ghost"
         size="icon"
-        className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full h-14 w-14 bg-card/80 backdrop-blur hover:bg-card shadow-lg z-20"
+        className="hidden md:inline-flex absolute right-4 top-1/2 -translate-y-1/2 rounded-full h-14 w-14 bg-card/80 backdrop-blur hover:bg-card shadow-lg z-20"
         onClick={() => {
           nextSlide()
           setIsAutoPlaying(false)

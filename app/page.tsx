@@ -41,17 +41,17 @@ export default async function Home() {
       <HeroCarousel products={products || []} events={events || []} />
 
       {/* Products and Events - Solid background */}
-      <main className="w-full">
-        {/* Products Section - Full width translucent background */}
-        <section id="creations" className="w-full bg-background/95 backdrop-blur-md py-16">
+      <main className="w-full bg-background">
+        {/* Products Section - Solid background for faster paint */}
+        <section id="creations" className="w-full bg-background py-16">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-display font-bold mb-6 text-center">Our Creations</h2>
             <ProductGrid products={products || []} />
           </div>
         </section>
 
-        {/* Events Section - Full width translucent background */}
-        <section className="w-full bg-background/90 backdrop-blur-md py-16">
+        {/* Events Section - Solid background for faster paint */}
+        <section className="w-full bg-background py-16">
           <div className="container mx-auto px-4">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
               <h2 className="text-3xl font-display font-bold text-center sm:text-left">

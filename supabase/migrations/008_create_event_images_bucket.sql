@@ -35,3 +35,5 @@ create policy "event_images_delete_auth"
   using (bucket_id = 'event-images');
 
 
+
+

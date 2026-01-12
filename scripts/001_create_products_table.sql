@@ -9,7 +9,7 @@ create table if not exists public.products (
   price_large numeric(10,2),
   image_url text,
   customizations text[], -- Array of available customizations
-  category text default 'crepe-cake', -- crepe-cake, cookie, pastry, etc
+  category text default 'cake', -- cake, cookie, pastry, etc
   is_active boolean default true
 );
 

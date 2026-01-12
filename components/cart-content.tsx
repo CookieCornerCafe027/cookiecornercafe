@@ -10,7 +10,9 @@ interface CartItem {
   id: string
   name: string
   price: number
-  size: string
+  size?: string | null // Legacy field
+  sizeIndex?: number | null // New field - index into product's size_options
+  sizeLabel?: string | null
   quantity: number
   customizations?: string[]
 }
@@ -19,9 +21,11 @@ const normalizeCart = (items: CartItem[]): CartItem[] => {
   const map = new Map<string, CartItem>()
 
   for (const item of items) {
+    // Use sizeIndex if available, fallback to legacy size field
+    const sizeKey = item.sizeIndex !== undefined ? item.sizeIndex : item.size;
     const key = [
       item.id,
-      item.size,
+      sizeKey,
       Array.isArray(item.customizations) ? item.customizations.join("|") : "",
     ].join("::")
 
@@ -94,7 +98,11 @@ export function CartContent() {
             <div key={index} className="flex items-center gap-4 pb-4 border-b last:border-0">
               <div className="flex-1">
                 <h3 className="font-semibold">{item.name}</h3>
-                <p className="text-sm text-muted-foreground">Size: {item.size}</p>
+                {(item.sizeLabel || item.size) && (
+                  <p className="text-sm text-muted-foreground">
+                    Size: {item.sizeLabel || item.size}
+                  </p>
+                )}
                 {item.customizations && item.customizations.length > 0 && (
                   <p className="text-sm text-muted-foreground">Customizations: {item.customizations.join(", ")}</p>
                 )}

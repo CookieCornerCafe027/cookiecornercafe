@@ -30,3 +30,5 @@ create policy "event_registrations_update_auth"
   using (true);
 
 
+
+

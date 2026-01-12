@@ -23,18 +23,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Pencil, Trash2, Upload, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Upload, X, Minus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+
+interface SizeOption {
+  label: string;
+  price: number;
+}
 
 interface Product {
   id: string;
   name: string;
   description: string;
-  price_small: number | null;
-  price_medium: number | null;
-  price_large: number | null;
+  price_small: number | null; // Legacy - kept for backward compatibility
+  price_medium: number | null; // Legacy
+  price_large: number | null; // Legacy
+  size_small_label: string | null; // Legacy
+  size_medium_label: string | null; // Legacy
+  size_large_label: string | null; // Legacy
+  size_options: SizeOption[] | null; // New flexible format
   image_urls: string[] | null;
   category: string;
   customizations: string[] | null;
@@ -65,25 +74,22 @@ export function ProductManager({
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    price_small: "",
-    price_medium: "",
-    price_large: "",
-    category: "crepe-cake",
+    category: "cake",
     customizations: "",
     is_active: true,
   });
+  
+  const [sizeOptions, setSizeOptions] = useState<Array<{ label: string; price: string }>>([]);
 
   const resetForm = () => {
     setFormData({
       name: "",
       description: "",
-      price_small: "",
-      price_medium: "",
-      price_large: "",
-      category: "crepe-cake",
+      category: "cake",
       customizations: "",
       is_active: true,
     });
+    setSizeOptions([]);
     setEditingProduct(null);
     setImageFiles([]);
     setImagePreviews([]);
@@ -95,13 +101,43 @@ export function ProductManager({
     setFormData({
       name: product.name,
       description: product.description || "",
-      price_small: product.price_small?.toString() || "",
-      price_medium: product.price_medium?.toString() || "",
-      price_large: product.price_large?.toString() || "",
       category: product.category,
       customizations: product.customizations?.join(", ") || "",
       is_active: product.is_active,
     });
+    
+    // Load size options from new format or migrate from legacy fields
+    if (product.size_options && product.size_options.length > 0) {
+      setSizeOptions(
+        product.size_options.map(opt => ({
+          label: opt.label,
+          price: opt.price.toString(),
+        }))
+      );
+    } else {
+      // Migrate from legacy fields
+      const legacySizes = [];
+      if (product.price_small) {
+        legacySizes.push({
+          label: product.size_small_label || "",
+          price: product.price_small.toString(),
+        });
+      }
+      if (product.price_medium) {
+        legacySizes.push({
+          label: product.size_medium_label || "",
+          price: product.price_medium.toString(),
+        });
+      }
+      if (product.price_large) {
+        legacySizes.push({
+          label: product.size_large_label || "",
+          price: product.price_large.toString(),
+        });
+      }
+      setSizeOptions(legacySizes);
+    }
+    
     setExistingImageUrls(product.image_urls || []);
     setImageFiles([]);
     setImagePreviews([]);
@@ -210,18 +246,18 @@ export function ProductManager({
         allImageUrls = [...allImageUrls, ...uploadedUrls];
       }
 
+      // Convert size options to proper format
+      const validSizeOptions = sizeOptions
+        .filter(opt => opt.label.trim() && opt.price.trim())
+        .map(opt => ({
+          label: opt.label.trim(),
+          price: Number.parseFloat(opt.price),
+        }));
+
       const productData = {
         name: formData.name,
         description: formData.description,
-        price_small: formData.price_small
-          ? Number.parseFloat(formData.price_small)
-          : null,
-        price_medium: formData.price_medium
-          ? Number.parseFloat(formData.price_medium)
-          : null,
-        price_large: formData.price_large
-          ? Number.parseFloat(formData.price_large)
-          : null,
+        size_options: validSizeOptions.length > 0 ? validSizeOptions : null,
         image_urls: allImageUrls.length > 0 ? allImageUrls : null,
         category: formData.category,
         customizations: formData.customizations
@@ -336,50 +372,78 @@ export function ProductManager({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="crepe-cake">Crepe Cake</SelectItem>
+                  <SelectItem value="cake">Cake</SelectItem>
                   <SelectItem value="cookie">Cookie</SelectItem>
                   <SelectItem value="pastry">Pastry</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="price_small">Small Price</Label>
-                <Input
-                  id="price_small"
-                  type="number"
-                  step="0.01"
-                  value={formData.price_small}
-                  onChange={(e) =>
-                    setFormData({ ...formData, price_small: e.target.value })
-                  }
-                />
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label>Size Options (Optional)</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSizeOptions([...sizeOptions, { label: "", price: "" }])}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Size
+                </Button>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="price_medium">Medium Price</Label>
-                <Input
-                  id="price_medium"
-                  type="number"
-                  step="0.01"
-                  value={formData.price_medium}
-                  onChange={(e) =>
-                    setFormData({ ...formData, price_medium: e.target.value })
-                  }
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="price_large">Large Price</Label>
-                <Input
-                  id="price_large"
-                  type="number"
-                  step="0.01"
-                  value={formData.price_large}
-                  onChange={(e) =>
-                    setFormData({ ...formData, price_large: e.target.value })
-                  }
-                />
-              </div>
+
+              {sizeOptions.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4 text-center border-2 border-dashed rounded-lg">
+                  No size options. Product will have a single price. Click "Add Size" to add size variations.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {sizeOptions.map((option, index) => (
+                    <div key={index} className="grid grid-cols-[1fr,1fr,auto] gap-2 items-start">
+                      <div>
+                        <Input
+                          placeholder='Size (e.g., "6 inches")'
+                          value={option.label}
+                          onChange={(e) => {
+                            const newOptions = [...sizeOptions];
+                            newOptions[index].label = e.target.value;
+                            setSizeOptions(newOptions);
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="Price"
+                          value={option.price}
+                          onChange={(e) => {
+                            const newOptions = [...sizeOptions];
+                            newOptions[index].price = e.target.value;
+                            setSizeOptions(newOptions);
+                          }}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setSizeOptions(sizeOptions.filter((_, i) => i !== index));
+                        }}
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <p className="text-xs text-muted-foreground">
+                Add size options for products with variations (e.g., different cake sizes).
+                Leave empty for products with a single price (e.g., cookies).
+              </p>
             </div>
 
             <div className="grid gap-2">
@@ -553,16 +617,27 @@ export function ProductManager({
                   <p className="text-sm text-muted-foreground mb-2">
                     {product.description}
                   </p>
-                  <div className="flex gap-4 text-sm">
+                  <div className="flex gap-4 text-sm flex-wrap">
                     <span>Category: {product.category}</span>
-                    {product.price_small && (
-                      <span>S: ${product.price_small}</span>
-                    )}
-                    {product.price_medium && (
-                      <span>M: ${product.price_medium}</span>
-                    )}
-                    {product.price_large && (
-                      <span>L: ${product.price_large}</span>
+                    {product.size_options && product.size_options.length > 0 ? (
+                      product.size_options.map((option, idx) => (
+                        <span key={idx}>
+                          {option.label}: ${option.price.toFixed(2)}
+                        </span>
+                      ))
+                    ) : (
+                      // Fallback for legacy products
+                      <>
+                        {product.price_small && (
+                          <span>{product.size_small_label || "Option 1"}: ${product.price_small}</span>
+                        )}
+                        {product.price_medium && (
+                          <span>{product.size_medium_label || "Option 2"}: ${product.price_medium}</span>
+                        )}
+                        {product.price_large && (
+                          <span>{product.size_large_label || "Option 3"}: ${product.price_large}</span>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>

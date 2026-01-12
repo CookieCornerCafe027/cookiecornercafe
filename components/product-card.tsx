@@ -12,14 +12,23 @@ import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import Link from "next/link";
 
+interface SizeOption {
+  label: string;
+  price: number;
+}
+
 interface ProductCardProps {
   product: {
     id: string;
     name: string;
     description: string;
-    price_small: number | null;
-    price_medium: number | null;
-    price_large: number | null;
+    price_small: number | null; // Legacy
+    price_medium: number | null; // Legacy
+    price_large: number | null; // Legacy
+    size_small_label: string | null; // Legacy
+    size_medium_label: string | null; // Legacy
+    size_large_label: string | null; // Legacy
+    size_options: SizeOption[] | null; // New flexible format
     image_urls: string[] | null;
     category: string;
     customizations: string[] | null;
@@ -28,11 +37,29 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, onAddToCart }: ProductCardProps) {
-  const priceDisplay = product.price_small
-    ? `$${product.price_small.toFixed(2)}${
-        product.price_medium ? ` - $${product.price_large?.toFixed(2)}` : ""
-      }`
-    : "Price varies";
+  // Build price display from new size_options or fallback to legacy fields
+  let prices: number[] = [];
+  
+  if (product.size_options && product.size_options.length > 0) {
+    prices = product.size_options.map(opt => opt.price);
+  } else {
+    prices = [
+      product.price_small,
+      product.price_medium,
+      product.price_large,
+    ].filter((p): p is number => p !== null);
+  }
+  
+  let priceDisplay = "Price varies";
+  if (prices.length === 1) {
+    // Single price - show exact amount
+    priceDisplay = `$${prices[0].toFixed(2)}`;
+  } else if (prices.length > 1) {
+    // Multiple prices - show range
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+    priceDisplay = `$${minPrice.toFixed(2)} - $${maxPrice.toFixed(2)}`;
+  }
 
   // Use first image as primary image
   const primaryImage = product.image_urls?.[0];
@@ -78,7 +105,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
               {product.name}
             </CardTitle>
             <Badge variant="secondary" className="shrink-0">
-              {product.category === "crepe-cake" ? "Crepe Cake" : "Cookie"}
+              {product.category === "cake" ? "Cake" : product.category === "cookie" ? "Cookie" : "Pastry"}
             </Badge>
           </div>
           <CardDescription className="line-clamp-2">

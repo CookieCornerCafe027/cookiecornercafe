@@ -11,13 +11,22 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+interface SizeOption {
+  label: string;
+  price: number;
+}
+
 interface Product {
   id: string;
   name: string;
   description: string;
-  price_small: number | null;
-  price_medium: number | null;
-  price_large: number | null;
+  price_small: number | null; // Legacy
+  price_medium: number | null; // Legacy
+  price_large: number | null; // Legacy
+  size_small_label: string | null; // Legacy
+  size_medium_label: string | null; // Legacy
+  size_large_label: string | null; // Legacy
+  size_options: SizeOption[] | null; // New flexible format
   image_urls: string[] | null;
   category: string;
   customizations: string[] | null;
@@ -31,16 +40,38 @@ export function ProductDetail({ product }: ProductDetailProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [selectedSize, setSelectedSize] = useState<
-    "small" | "medium" | "large" | null
-  >(
-    product.price_small
-      ? "small"
-      : product.price_medium
-      ? "medium"
-      : product.price_large
-      ? "large"
-      : null
+  
+  // Use new size_options format or fallback to legacy fields
+  const sizeOptions = product.size_options && product.size_options.length > 0
+    ? product.size_options.map((opt, idx) => ({
+        index: idx,
+        label: opt.label,
+        price: opt.price,
+      }))
+    : [
+        product.price_small ? { 
+          index: 0,
+          label: product.size_small_label || "Option 1",
+          price: product.price_small 
+        } : null,
+        product.price_medium ? { 
+          index: 1,
+          label: product.size_medium_label || "Option 2",
+          price: product.price_medium 
+        } : null,
+        product.price_large ? { 
+          index: 2,
+          label: product.size_large_label || "Option 3",
+          price: product.price_large 
+        } : null,
+      ].filter((opt): opt is NonNullable<typeof opt> => opt !== null);
+  
+  const hasSizes = sizeOptions.length > 0;
+  const hasMultipleSizes = sizeOptions.length > 1;
+  
+  // Auto-select first available size
+  const [selectedSizeIndex, setSelectedSizeIndex] = useState<number | null>(
+    sizeOptions.length > 0 ? sizeOptions[0].index : null
   );
 
   const images = product.image_urls || [];
@@ -54,20 +85,18 @@ export function ProductDetail({ product }: ProductDetailProps) {
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
-  const getPrice = (size: "small" | "medium" | "large" | null) => {
-    if (size === "small") return product.price_small;
-    if (size === "medium") return product.price_medium;
-    if (size === "large") return product.price_large;
-    return null;
+  const getSelectedOption = () => {
+    if (selectedSizeIndex === null) return null;
+    return sizeOptions.find(opt => opt.index === selectedSizeIndex) || null;
   };
+  
+  const selectedOption = getSelectedOption();
+  const currentPrice = selectedOption?.price || null;
 
-  const currentPrice = getPrice(selectedSize);
 
   const handleAddToCart = () => {
-    if (
-      !selectedSize &&
-      (product.price_small || product.price_medium || product.price_large)
-    ) {
+    // Only require size selection if there are multiple sizes
+    if (hasMultipleSizes && selectedSizeIndex === null) {
       toast({
         title: "Please select a size",
         variant: "destructive",
@@ -78,7 +107,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
     const currentCart = JSON.parse(localStorage.getItem("cart") || "[]");
 
     const existingIndex = currentCart.findIndex(
-      (item: any) => item.id === product.id && item.size === selectedSize
+      (item: any) => item.id === product.id && item.sizeIndex === selectedSizeIndex
     );
 
     if (existingIndex !== -1) {
@@ -89,7 +118,8 @@ export function ProductDetail({ product }: ProductDetailProps) {
         id: product.id,
         name: product.name,
         price: currentPrice,
-        size: selectedSize,
+        sizeIndex: selectedSizeIndex,
+        sizeLabel: selectedOption?.label || null,
         quantity: 1,
       });
     }
@@ -188,7 +218,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Badge variant="secondary">
-                {product.category === "crepe-cake" ? "Crepe Cake" : "Cookie"}
+                {product.category === "cake" ? "Cake" : product.category === "cookie" ? "Cookie" : "Pastry"}
               </Badge>
             </div>
             <h1 className="text-3xl md:text-4xl font-display font-bold text-primary">
@@ -203,41 +233,34 @@ export function ProductDetail({ product }: ProductDetailProps) {
             <p>{product.description}</p>
           </div>
 
-          <div className="space-y-4">
-            <div className="font-medium">Select Size</div>
-            <RadioGroup
-              value={selectedSize || ""}
-              onValueChange={(val) =>
-                setSelectedSize(val as "small" | "medium" | "large")
-              }
-              className="flex flex-col space-y-1"
-            >
-              {product.price_small && (
-                <div className="flex items-center space-x-2 border rounded p-3 cursor-pointer hover:bg-accent transition-colors duration-200 has-[data-state=checked]:bg-accent has-[data-state=checked]:border-primary">
-                  <RadioGroupItem value="small" id="small" />
-                  <Label htmlFor="small" className="flex-1 cursor-pointer">
-                    Small - ${product.price_small.toFixed(2)}
-                  </Label>
-                </div>
-              )}
-              {product.price_medium && (
-                <div className="flex items-center space-x-2 border rounded p-3 cursor-pointer hover:bg-accent transition-colors duration-200 has-[data-state=checked]:bg-accent has-[data-state=checked]:border-primary">
-                  <RadioGroupItem value="medium" id="medium" />
-                  <Label htmlFor="medium" className="flex-1 cursor-pointer">
-                    Medium - ${product.price_medium.toFixed(2)}
-                  </Label>
-                </div>
-              )}
-              {product.price_large && (
-                <div className="flex items-center space-x-2 border rounded p-3 cursor-pointer hover:bg-accent transition-colors duration-200 has-[data-state=checked]:bg-accent has-[data-state=checked]:border-primary">
-                  <RadioGroupItem value="large" id="large" />
-                  <Label htmlFor="large" className="flex-1 cursor-pointer">
-                    Large - ${product.price_large.toFixed(2)}
-                  </Label>
-                </div>
-              )}
-            </RadioGroup>
-          </div>
+          {hasSizes && hasMultipleSizes && (
+            <div className="space-y-4">
+              <div className="font-medium">Select Size</div>
+              <RadioGroup
+                value={selectedSizeIndex?.toString() || ""}
+                onValueChange={(val) => setSelectedSizeIndex(Number(val))}
+                className="flex flex-col space-y-1"
+              >
+                {sizeOptions.map((option) => (
+                  <div 
+                    key={option.index}
+                    className="flex items-center space-x-2 border rounded p-3 cursor-pointer hover:bg-accent transition-colors duration-200 has-[data-state=checked]:bg-accent has-[data-state=checked]:border-primary"
+                  >
+                    <RadioGroupItem value={option.index.toString()} id={`size-${option.index}`} />
+                    <Label htmlFor={`size-${option.index}`} className="flex-1 cursor-pointer">
+                      {option.label} - ${option.price.toFixed(2)}
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            </div>
+          )}
+          
+          {hasSizes && !hasMultipleSizes && sizeOptions[0].label && (
+            <div className="text-sm text-muted-foreground">
+              Size: {sizeOptions[0].label}
+            </div>
+          )}
 
           <p className="text-xs text-muted-foreground">
             You can add custom instructions (writing on cakes, allergies,

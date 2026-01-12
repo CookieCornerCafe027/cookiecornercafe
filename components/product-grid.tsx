@@ -2,13 +2,22 @@
 
 import { ProductCard } from "./product-card";
 
+interface SizeOption {
+  label: string;
+  price: number;
+}
+
 interface Product {
   id: string;
   name: string;
   description: string;
-  price_small: number | null;
-  price_medium: number | null;
-  price_large: number | null;
+  price_small: number | null; // Legacy
+  price_medium: number | null; // Legacy
+  price_large: number | null; // Legacy
+  size_small_label: string | null; // Legacy
+  size_medium_label: string | null; // Legacy
+  size_large_label: string | null; // Legacy
+  size_options: SizeOption[] | null; // New flexible format
   image_urls: string[] | null;
   category: string;
   customizations: string[] | null;
@@ -24,14 +33,38 @@ export function ProductGrid({ products }: ProductGridProps) {
     const product = products.find((p) => p.id === productId);
 
     if (product) {
-      const size = product.price_small
-        ? "small"
-        : product.price_medium
-        ? "medium"
-        : "large";
+      // Use new size_options format or fallback to legacy fields
+      let sizeIndex: number | null = null;
+      let sizeLabel: string | null = null;
+      let price: number | null = null;
+      
+      if (product.size_options && product.size_options.length > 0) {
+        // Use first size option from new format
+        sizeIndex = 0;
+        sizeLabel = product.size_options[0].label;
+        price = product.size_options[0].price;
+      } else {
+        // Fallback to legacy fields
+        if (product.price_small) {
+          sizeIndex = 0;
+          sizeLabel = product.size_small_label || null;
+          price = product.price_small;
+        } else if (product.price_medium) {
+          sizeIndex = 1;
+          sizeLabel = product.size_medium_label || null;
+          price = product.price_medium;
+        } else if (product.price_large) {
+          sizeIndex = 2;
+          sizeLabel = product.size_large_label || null;
+          price = product.price_large;
+        }
+      }
+      
+      // If no price found, skip adding to cart
+      if (!price) return;
 
       const existingIndex = currentCart.findIndex(
-        (item: any) => item.id === product.id && item.size === size
+        (item: any) => item.id === product.id && item.sizeIndex === sizeIndex
       );
 
       if (existingIndex !== -1) {
@@ -41,9 +74,9 @@ export function ProductGrid({ products }: ProductGridProps) {
         currentCart.push({
           id: product.id,
           name: product.name,
-          price:
-            product.price_small || product.price_medium || product.price_large,
-          size,
+          price,
+          sizeIndex,
+          sizeLabel,
           quantity: 1,
         });
       }
@@ -66,18 +99,18 @@ export function ProductGrid({ products }: ProductGridProps) {
     );
   }
 
-  const crepeCakes = products.filter((p) => p.category === "crepe-cake");
+  const cakes = products.filter((p) => p.category === "cake");
   const cookies = products.filter((p) => p.category === "cookie");
 
   return (
     <div className="space-y-12">
-      {crepeCakes.length > 0 && (
+      {cakes.length > 0 && (
         <div>
           <h3 className="text-2xl font-display font-semibold mb-6 text-primary">
-            Crepe Cakes
+            Cakes
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {crepeCakes.map((product) => (
+            {cakes.map((product) => (
               <ProductCard
                 key={product.id}
                 product={product}

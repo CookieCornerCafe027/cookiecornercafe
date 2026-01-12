@@ -21,7 +21,9 @@ function isMissingColumnError(err: any, column: string) {
 const CartItemSchema = z.object({
   id: z.string().uuid(),
   quantity: z.number().int().min(1).max(99),
-  size: z.enum(["small", "medium", "large"]).nullable().optional(),
+  size: z.string().nullable().optional(), // Legacy size key (small, medium, large)
+  sizeIndex: z.number().nullable().optional(), // New: index into product's size_options array
+  sizeLabel: z.string().nullable().optional(), // Display label for size
   customizations: z.array(z.string()).optional(),
 });
 
@@ -77,8 +79,18 @@ function toCents(amount: number) {
 
 function pickUnitPrice(
   product: any,
-  size: "small" | "medium" | "large" | null | undefined
+  sizeIndex: number | null | undefined,
+  legacySize: string | null | undefined
 ) {
+  // Try new size_options format first
+  if (sizeIndex != null && product.size_options && Array.isArray(product.size_options)) {
+    const option = product.size_options[sizeIndex];
+    if (option && option.price != null) {
+      return Number(option.price);
+    }
+  }
+
+  // Fallback to legacy fields
   const small =
     product.price_small != null ? Number(product.price_small) : null;
   const medium =
@@ -86,12 +98,55 @@ function pickUnitPrice(
   const large =
     product.price_large != null ? Number(product.price_large) : null;
 
-  if (size === "small") return small;
-  if (size === "medium") return medium;
-  if (size === "large") return large;
+  // Legacy index-based (0, 1, 2)
+  if (sizeIndex === 0) return small;
+  if (sizeIndex === 1) return medium;
+  if (sizeIndex === 2) return large;
 
-  // Fallback for legacy/null size carts: pick first available price.
+  // Legacy size keys
+  if (legacySize === "small") return small;
+  if (legacySize === "medium") return medium;
+  if (legacySize === "large") return large;
+  
+  // Very old format (6, 8, 10)
+  if (legacySize === "6") return small;
+  if (legacySize === "8") return medium;
+  if (legacySize === "10") return large;
+
+  // Fallback: pick first available price
   return small ?? medium ?? large;
+}
+
+function getSizeLabel(
+  product: any,
+  sizeIndex: number | null | undefined,
+  providedLabel: string | null | undefined,
+  legacySize: string | null | undefined
+): string {
+  // Use provided label if available
+  if (providedLabel) return providedLabel;
+
+  // Try to get from new size_options format
+  if (sizeIndex != null && product.size_options && Array.isArray(product.size_options)) {
+    const option = product.size_options[sizeIndex];
+    if (option && option.label) {
+      return option.label;
+    }
+  }
+
+  // Fallback to legacy label fields
+  if (sizeIndex === 0 && product.size_small_label) return product.size_small_label;
+  if (sizeIndex === 1 && product.size_medium_label) return product.size_medium_label;
+  if (sizeIndex === 2 && product.size_large_label) return product.size_large_label;
+
+  if (legacySize === "small" && product.size_small_label) return product.size_small_label;
+  if (legacySize === "medium" && product.size_medium_label) return product.size_medium_label;
+  if (legacySize === "large" && product.size_large_label) return product.size_large_label;
+
+  // Return the raw size if we have it
+  if (legacySize) return legacySize;
+
+  return "";
 }
 
 export async function POST(req: Request) {
@@ -106,7 +161,7 @@ export async function POST(req: Request) {
 
     const { data: products, error: productsError } = await supabase
       .from("products")
-      .select("id,name,price_small,price_medium,price_large")
+      .select("id,name,price_small,price_medium,price_large,size_small_label,size_medium_label,size_large_label,size_options")
       .in("id", productIds);
 
     if (productsError) throw productsError;
@@ -126,7 +181,7 @@ export async function POST(req: Request) {
         );
       }
 
-      const unitPrice = pickUnitPrice(product, item.size ?? null);
+      const unitPrice = pickUnitPrice(product, item.sizeIndex ?? null, item.size ?? null);
       if (unitPrice == null || Number.isNaN(unitPrice) || unitPrice <= 0) {
         return NextResponse.json(
           {
@@ -136,7 +191,10 @@ export async function POST(req: Request) {
         );
       }
 
-      const sizeLabel = item.size ? ` (${item.size})` : "";
+      // Convert size to display format (e.g., "6" -> "6 inches")
+      // Get size label for Stripe product name
+      const label = getSizeLabel(product, item.sizeIndex ?? null, item.sizeLabel ?? null, item.size ?? null);
+      const sizeLabel = label ? ` (${label})` : "";
       const unitAmount = toCents(unitPrice);
 
       lineItems.push({
@@ -155,7 +213,7 @@ export async function POST(req: Request) {
       productOrders.push({
         product_id: product.id,
         product_name: product.name,
-        size: item.size ?? null,
+        size: item.sizeIndex !== undefined ? `index:${item.sizeIndex}` : (item.size ?? null),
         quantity: item.quantity,
         customizations: item.customizations ?? [],
         unit_price: unitPrice,

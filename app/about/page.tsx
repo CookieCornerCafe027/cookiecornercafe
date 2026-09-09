@@ -22,7 +22,7 @@ export default function AboutPage() {
           </section>
 
           {/* Story Section */}
-          <section className="grid md:grid-cols-2 gap-8 items-center">
+          <section className="grid md:grid-cols-[0.8fr_1.2fr] gap-8 items-center">
             <Card>
               <CardContent className="p-6">
                 <h2 className="text-3xl font-display font-bold mb-4 text-primary">
@@ -67,7 +67,7 @@ export default function AboutPage() {
               </CardContent>
             </Card>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
   <div className="aspect-square relative rounded-2xl overflow-hidden">
     <Image
       src="/IMG_0946.jpeg"

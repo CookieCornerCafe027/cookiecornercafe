@@ -67,13 +67,52 @@ export default function AboutPage() {
               </CardContent>
             </Card>
 
-            <div className="aspect-square relative rounded-3xl overflow-hidden bg-muted">
-              <Image
-                src="/beautiful-matcha-crepe-cake-with-strawberries.jpg"
-                alt="Our signature crepe cakes"
-                fill
-                className="object-cover"
-              />
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+  <div className="aspect-square relative rounded-2xl overflow-hidden">
+    <Image
+      src="/IMG_0946.jpeg"
+      alt="Cookie Corner gallery"
+      fill
+      className="object-cover"
+    />
+  </div>
+
+  <div className="aspect-square relative rounded-2xl overflow-hidden">
+    <Image
+      src="/IMG_0953.jpeg"
+      alt="Cookie Corner gallery"
+      fill
+      className="object-cover"
+    />
+  </div>
+
+  <div className="aspect-square relative rounded-2xl overflow-hidden">
+    <Image
+      src="/IMG_8690.jpeg"
+      alt="Cookie Corner gallery"
+      fill
+      className="object-cover"
+    />
+  </div>
+
+  <div className="aspect-square relative rounded-2xl overflow-hidden">
+    <Image
+      src="/IMG_0684.jpeg"
+      alt="Cookie Corner gallery"
+      fill
+      className="object-cover"
+    />
+  </div>
+
+  <div className="aspect-square relative rounded-2xl overflow-hidden">
+    <Image
+      src="/IMG_4814.jpeg"
+      alt="Cookie Corner gallery"
+      fill
+      className="object-cover"
+    />
+  </div>
+</div>
             </div>
           </section>
 

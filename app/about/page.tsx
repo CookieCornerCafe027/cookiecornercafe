@@ -22,7 +22,7 @@ export default function AboutPage() {
           </section>
 
           {/* Story Section */}
-          <section className="grid md:grid-cols-2 gap-8 items-center">
+          <section className="grid md:grid-cols-[0.8fr_1.2fr] gap-8 items-center">
             <Card>
               <CardContent className="p-6">
                 <h2 className="text-3xl font-display font-bold mb-4 text-primary">
@@ -67,15 +67,63 @@ export default function AboutPage() {
               </CardContent>
             </Card>
 
-            <div className="aspect-square relative rounded-3xl overflow-hidden bg-muted">
-              <Image
-                src="/beautiful-matcha-crepe-cake-with-strawberries.jpg"
-                alt="Our signature crepe cakes"
-                fill
-                className="object-cover"
-              />
-            </div>
-          </section>
+            <div className="grid grid-cols-2 gap-4">
+  <div className="aspect-square relative rounded-2xl overflow-hidden">
+    <Image
+      src="/IMG_0946.jpeg"
+      alt="Cookie Corner gallery"
+      fill
+      className="object-cover"
+    />
+  </div>
+
+  <div className="aspect-square relative rounded-2xl overflow-hidden">
+    <Image
+      src="/IMG_0953.jpeg"
+      alt="Cookie Corner gallery"
+      fill
+      className="object-cover"
+    />
+  </div>
+
+  <div className="aspect-square relative rounded-2xl overflow-hidden">
+    <Image
+      src="/IMG_8690.jpeg"
+      alt="Cookie Corner gallery"
+      fill
+      className="object-cover"
+    />
+  </div>
+
+  <div className="aspect-square relative rounded-2xl overflow-hidden">
+    <Image
+      src="/IMG_0684.jpeg"
+      alt="Cookie Corner gallery"
+      fill
+      className="object-cover"
+    />
+  </div>
+
+  <div className="aspect-square relative rounded-2xl overflow-hidden">
+    <Image
+      src="/IMG_4814.jpeg"
+      alt="Cookie Corner gallery"
+      fill
+      className="object-cover"
+    />
+  </div>
+
+  <div className="aspect-square relative rounded-2xl overflow-hidden">
+    <Image
+      src="/IMG_0363.jpeg"
+      alt="Cookie Corner gallery"
+      fill
+      className="object-cover"
+    />
+  </div>
+
+</div>
+</section>
 
           {/* Values Section */}
           <section>

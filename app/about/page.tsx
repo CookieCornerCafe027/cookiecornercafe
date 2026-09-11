@@ -112,8 +112,18 @@ export default function AboutPage() {
       className="object-cover"
     />
   </div>
+
+  <div className="aspect-square relative rounded-2xl overflow-hidden">
+    <Image
+      src="/IMG_0363.jpeg"
+      alt="Cookie Corner gallery"
+      fill
+      className="object-cover"
+    />
+  </div>
+
 </div>
-          </section>
+</section>
 
           {/* Values Section */}
           <section>

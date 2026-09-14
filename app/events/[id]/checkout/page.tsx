@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 
 interface PageProps {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ qty?: string }>;
+  searchParams: Promise<{ qty?: string; date?: string }>;
 }
 
 export default async function EventCheckoutPage({ params, searchParams }: PageProps) {
@@ -15,7 +15,7 @@ export default async function EventCheckoutPage({ params, searchParams }: PagePr
 
   const { data: event, error } = await supabase
     .from("events")
-    .select("id,title,price_per_entry")
+    .select("*")
     .eq("id", id)
     .single();
 
@@ -31,7 +31,11 @@ export default async function EventCheckoutPage({ params, searchParams }: PagePr
       <Header />
       <main className="container mx-auto py-8 px-0 sm:px-4">
         <div className="max-w-2xl mx-auto">
-          <EventCheckoutForm event={event as any} initialQuantity={initialQuantity} />
+          <EventCheckoutForm
+            event={event as any}
+            initialQuantity={initialQuantity}
+            initialDate={sp.date}
+          />
         </div>
       </main>
     </>

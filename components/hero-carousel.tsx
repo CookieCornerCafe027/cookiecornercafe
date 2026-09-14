@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { cn, getOptimizedImageUrl } from "@/lib/utils"
 import Image from "next/image"
 import Link from "next/link"
+import { formatEventScheduleLabel } from "@/lib/events/schedule"
 
 interface Product {
   id: string
@@ -21,6 +22,9 @@ interface Event {
   image_urls: string[] | null
   starts_at: string | null
   ends_at: string | null
+  is_recurring?: boolean | null
+  recurrence_weekdays?: number[] | null
+  recurrence_until?: string | null
 }
 
 interface HeroCarouselProps {
@@ -36,7 +40,6 @@ export function HeroCarousel({ products, events }: HeroCarouselProps) {
   const slides = [
     // Featured events first (up to 3)
     ...events.slice(0, 3).map((event) => {
-      const startDate = event.starts_at ? new Date(event.starts_at) : null
       return {
         type: "event" as const,
         id: event.id,
@@ -47,12 +50,7 @@ export function HeroCarousel({ products, events }: HeroCarouselProps) {
           quality: 78,
           format: "webp",
         }) || "/placeholder.jpg",
-        eventDate: startDate?.toISOString().split('T')[0] || null,
-        eventTime: startDate ? startDate.toLocaleTimeString("en-US", { 
-          hour: "numeric", 
-          minute: "2-digit",
-          hour12: true 
-        }) : null,
+        eventWhen: formatEventScheduleLabel(event),
         accent: "🎉",
       }
     }),
@@ -223,16 +221,11 @@ export function HeroCarousel({ products, events }: HeroCarouselProps) {
                     <div className="hidden md:flex order-2 md:order-2 p-8 md:p-12 flex-col justify-center space-y-3 md:space-y-4 overflow-hidden">
                       {/* Event Badge - Reserve space even when not shown */}
                       <div className="h-[42px] flex items-start">
-                        {slide.type === "event" && (slide.eventDate || slide.eventTime) && (
+                        {slide.type === "event" && slide.eventWhen && (
                           <div className="inline-flex items-center gap-2 bg-primary/20 backdrop-blur px-4 py-2 rounded-full border-2 border-primary/30">
                             <Calendar className="h-5 w-5 text-primary" />
                             <span className="text-sm font-semibold text-foreground">
-                              {slide.eventDate && new Date(slide.eventDate).toLocaleDateString("en-US", { 
-                                month: "short", 
-                                day: "numeric",
-                                year: "numeric"
-                              })}
-                              {slide.eventTime && ` • ${slide.eventTime}`}
+                              {slide.eventWhen}
                             </span>
                           </div>
                         )}

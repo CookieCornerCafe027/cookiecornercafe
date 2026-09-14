@@ -6,26 +6,46 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { EventBookingDatePicker } from "@/components/event-date-picker";
 import { useToast } from "@/hooks/use-toast";
+import {
+  formatOccurrenceLabel,
+  getNextBookableLocalDate,
+  isBookableLocalDate,
+  parseDateKeyToLocalDate,
+  toDateKeyLocal,
+  type EventScheduleFields,
+} from "@/lib/events/schedule";
 
 export interface EventCheckoutFormProps {
   event: {
     id: string;
     title: string;
     price_per_entry: number;
-  };
+  } & EventScheduleFields;
   initialQuantity?: number;
+  initialDate?: string;
 }
 
-export function EventCheckoutForm({ event, initialQuantity = 1 }: EventCheckoutFormProps) {
+export function EventCheckoutForm({
+  event,
+  initialQuantity = 1,
+  initialDate,
+}: EventCheckoutFormProps) {
   const { toast } = useToast();
   const [ticketQty, setTicketQty] = useState<number>(initialQuantity || 1);
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(() => {
+    const fromQuery = initialDate ? parseDateKeyToLocalDate(initialDate) : null;
+    if (fromQuery && isBookableLocalDate(event, fromQuery)) return fromQuery;
+    return getNextBookableLocalDate(event) ?? undefined;
+  });
 
   const total = useMemo(() => event.price_per_entry * ticketQty, [event.price_per_entry, ticketQty]);
+  const bookedDateKey = selectedDate ? toDateKeyLocal(selectedDate) : null;
 
   const startCheckout = async () => {
     if (
@@ -48,6 +68,14 @@ export function EventCheckoutForm({ event, initialQuantity = 1 }: EventCheckoutF
       });
       return;
     }
+    if (!bookedDateKey) {
+      toast({
+        title: "Pick a day",
+        description: "Please choose the day you want to book.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -60,6 +88,7 @@ export function EventCheckoutForm({ event, initialQuantity = 1 }: EventCheckoutF
           customerName,
           customerEmail,
           customerPhone,
+          bookedDate: bookedDateKey,
         }),
       });
 
@@ -98,9 +127,24 @@ export function EventCheckoutForm({ event, initialQuantity = 1 }: EventCheckoutF
           <p className="text-sm text-muted-foreground">
             ${event.price_per_entry.toFixed(2)} per entry
           </p>
+          {bookedDateKey ? (
+            <p className="text-sm text-muted-foreground">
+              {formatOccurrenceLabel(event, bookedDateKey)}
+            </p>
+          ) : null}
         </div>
 
         <div className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="eventDayCheckout">Day</Label>
+            <EventBookingDatePicker
+              id="eventDayCheckout"
+              event={event}
+              value={selectedDate}
+              onChange={setSelectedDate}
+            />
+          </div>
+
           <div className="grid gap-2">
             <Label htmlFor="ticketQtyCheckout">Tickets</Label>
             <Input
@@ -152,7 +196,12 @@ export function EventCheckoutForm({ event, initialQuantity = 1 }: EventCheckoutF
         </div>
 
         <div className="space-y-2">
-          <Button size="lg" className="w-full" onClick={startCheckout} disabled={isSubmitting}>
+          <Button
+            size="lg"
+            className="w-full"
+            onClick={startCheckout}
+            disabled={isSubmitting || !bookedDateKey}
+          >
             {isSubmitting ? "Redirecting..." : "Checkout"}
           </Button>
           <p className="text-xs text-muted-foreground text-center">
@@ -163,4 +212,3 @@ export function EventCheckoutForm({ event, initialQuantity = 1 }: EventCheckoutF
     </Card>
   );
 }
-

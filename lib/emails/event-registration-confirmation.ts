@@ -1,3 +1,8 @@
+import {
+  formatOccurrenceLabel,
+  type EventScheduleFields,
+} from "@/lib/events/schedule";
+
 export interface EventRegistrationForEmail {
   id: string;
   customer_name: string;
@@ -5,12 +10,12 @@ export interface EventRegistrationForEmail {
   customer_phone: string;
   quantity: number;
   price_paid: number;
-  event?: {
+  booked_date?: string | null;
+  event?: ({
     id: string;
     title: string | null;
-    starts_at?: string | null;
     location?: string | null;
-  } | null;
+  } & EventScheduleFields) | null;
 }
 
 function formatCurrency(amount: number | null | undefined) {
@@ -18,19 +23,22 @@ function formatCurrency(amount: number | null | undefined) {
   return `$${amount.toFixed(2)}`;
 }
 
-function formatWhen(start?: string | null) {
-  if (!start) return "TBD";
+function formatWhen(reg: EventRegistrationForEmail) {
+  const dateKey = reg.booked_date?.slice(0, 10);
+  if (dateKey && reg.event) {
+    return formatOccurrenceLabel(reg.event, dateKey);
+  }
+  if (!reg.event?.starts_at) return "TBD";
   try {
-    const d = new Date(start);
-    return d.toLocaleString();
+    return new Date(reg.event.starts_at).toLocaleString();
   } catch {
-    return String(start);
+    return String(reg.event.starts_at);
   }
 }
 
 export function renderEventRegistrationEmail(reg: EventRegistrationForEmail) {
   const eventTitle = reg.event?.title ?? "Event";
-  const when = formatWhen(reg.event?.starts_at ?? null);
+  const when = formatWhen(reg);
   const location = reg.event?.location ?? "TBD";
   const qty = reg.quantity ?? 1;
   const total = formatCurrency(reg.price_paid);

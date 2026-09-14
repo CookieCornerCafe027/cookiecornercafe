@@ -16,8 +16,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { EventBookingDatePicker } from "@/components/event-date-picker";
 import { useToast } from "@/hooks/use-toast";
 import { getOptimizedImageUrl } from "@/lib/utils";
+import {
+  formatEventScheduleLabel,
+  getNextBookableLocalDate,
+  toDateKeyLocal,
+} from "@/lib/events/schedule";
 
 export interface EventForDetail {
   id: string;
@@ -29,6 +35,9 @@ export interface EventForDetail {
   location: string | null;
   starts_at: string | null;
   ends_at: string | null;
+  is_recurring?: boolean | null;
+  recurrence_weekdays?: number[] | null;
+  recurrence_until?: string | null;
 }
 
 export function EventDetail({ event }: { event: EventForDetail }) {
@@ -41,35 +50,12 @@ export function EventDetail({ event }: { event: EventForDetail }) {
     );
   const hasMultipleImages = images.length > 1;
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const startDate = event.starts_at ? new Date(event.starts_at) : null;
-  const endDate = event.ends_at ? new Date(event.ends_at) : null;
-  const isSameDay =
-    !!startDate &&
-    !!endDate &&
-    startDate.getFullYear() === endDate.getFullYear() &&
-    startDate.getMonth() === endDate.getMonth() &&
-    startDate.getDate() === endDate.getDate();
-  const whenLabel = startDate
-    ? endDate
-      ? isSameDay
-        ? `${startDate.toLocaleDateString(undefined, {
-            weekday: "short",
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          })} • ${startDate.toLocaleTimeString(undefined, {
-            hour: "numeric",
-            minute: "2-digit",
-          })} – ${endDate.toLocaleTimeString(undefined, {
-            hour: "numeric",
-            minute: "2-digit",
-          })}`
-        : `${startDate.toLocaleString()} – ${endDate.toLocaleString()}`
-      : startDate.toLocaleString()
-    : null;
-
   const [ticketQty, setTicketQty] = useState<number>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(() =>
+    getNextBookableLocalDate(event) ?? undefined
+  );
+  const whenLabel = formatEventScheduleLabel(event);
 
   const setTicketQtyFromInput = (raw: string) => {
     const v = Number.parseInt(raw, 10);
@@ -97,8 +83,18 @@ export function EventDetail({ event }: { event: EventForDetail }) {
       });
       return;
     }
+    if (!selectedDate) {
+      toast({
+        title: "Pick a day",
+        description: "Please choose the day you want to book.",
+        variant: "destructive",
+      });
+      return;
+    }
     setIsSubmitting(true);
-    router.push(`/events/${event.id}/checkout?qty=${ticketQty}`);
+    router.push(
+      `/events/${event.id}/checkout?qty=${ticketQty}&date=${toDateKeyLocal(selectedDate)}`
+    );
   };
 
   return (
@@ -227,7 +223,7 @@ export function EventDetail({ event }: { event: EventForDetail }) {
                       When
                     </dt>
                     <dd className="font-medium">
-                      {whenLabel ?? "Date/time TBD"}
+                      {whenLabel}
                     </dd>
                   </div>
                 </div>
@@ -274,6 +270,16 @@ export function EventDetail({ event }: { event: EventForDetail }) {
           <div className="space-y-4">
             <div className="text-lg font-semibold">Reserve your spot</div>
 
+            <div className="grid gap-2">
+              <Label htmlFor="eventDay">Day</Label>
+              <EventBookingDatePicker
+                id="eventDay"
+                event={event}
+                value={selectedDate}
+                onChange={setSelectedDate}
+              />
+            </div>
+
             <div className="hidden md:grid gap-2">
               <Label htmlFor="ticketQty">Tickets</Label>
               <Input
@@ -297,7 +303,7 @@ export function EventDetail({ event }: { event: EventForDetail }) {
               size="lg"
               className="w-full hidden md:inline-flex"
               onClick={goToCheckout}
-              disabled={isSubmitting}
+              disabled={isSubmitting || !selectedDate}
             >
               {isSubmitting ? "Redirecting..." : "Go to checkout"}
             </Button>
@@ -334,12 +340,20 @@ export function EventDetail({ event }: { event: EventForDetail }) {
                   />
                 </div>
                 <div className="text-right">
-                  <div className="text-xs text-muted-foreground">Total</div>
+                  <div className="text-xs text-muted-foreground">
+                    {selectedDate
+                      ? selectedDate.toLocaleDateString(undefined, {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                        })
+                      : "Pick a day above"}
+                  </div>
                   <div className="font-semibold">${total.toFixed(2)}</div>
                 </div>
               </div>
 
-              <Button onClick={goToCheckout} disabled={isSubmitting} className="w-full">
+              <Button onClick={goToCheckout} disabled={isSubmitting || !selectedDate} className="w-full">
                 {isSubmitting ? "Redirecting..." : "Go to checkout"}
               </Button>
             </CardContent>

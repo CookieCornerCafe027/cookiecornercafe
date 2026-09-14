@@ -90,7 +90,7 @@ export async function POST(req: Request) {
       const { data: registration, error: regError } = await supabase
         .from("event_registrations")
         .select(
-          "id,customer_name,customer_email,customer_phone,quantity,price_paid,status,confirmation_email_sent_at,event:events(id,title,starts_at,location)"
+          "id,customer_name,customer_email,customer_phone,quantity,price_paid,status,confirmation_email_sent_at,booked_date,event:events(id,title,starts_at,ends_at,location,is_recurring,recurrence_weekdays,recurrence_until)"
         )
         .eq("id", eventRegistrationId)
         .maybeSingle();

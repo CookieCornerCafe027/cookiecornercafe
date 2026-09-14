@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { formatEventScheduleLabel } from "@/lib/events/schedule";
 
 export interface EventForCard {
   id: string;
@@ -22,6 +23,9 @@ export interface EventForCard {
   location: string | null;
   starts_at: string | null;
   ends_at: string | null;
+  is_recurring?: boolean | null;
+  recurrence_weekdays?: number[] | null;
+  recurrence_until?: string | null;
 }
 
 export function EventCard({ event }: { event: EventForCard }) {
@@ -30,7 +34,7 @@ export function EventCard({ event }: { event: EventForCard }) {
     quality: 75,
     format: "webp",
   });
-  const startLabel = event.starts_at ? new Date(event.starts_at).toLocaleString() : null;
+  const startLabel = formatEventScheduleLabel(event);
 
   return (
     <Card className="relative overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col pt-0">
@@ -75,11 +79,7 @@ export function EventCard({ event }: { event: EventForCard }) {
               </Badge>
             ) : null}
           </div>
-          {startLabel ? (
-            <p className="text-xs text-muted-foreground">{startLabel}</p>
-          ) : (
-            <p className="text-xs text-muted-foreground">Date/time: TBD</p>
-          )}
+          <p className="text-xs text-muted-foreground">{startLabel}</p>
           {event.description ? (
             <CardDescription className="line-clamp-2">
               {event.description}

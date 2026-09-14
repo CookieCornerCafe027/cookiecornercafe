@@ -4,6 +4,11 @@ import crypto from "node:crypto";
 
 import { getStripe } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  bookableDateError,
+  formatDateKeyLabel,
+  isDateKey,
+} from "@/lib/events/schedule";
 
 export const runtime = "nodejs";
 
@@ -15,6 +20,7 @@ const EventCheckoutRequestSchema = z.object({
   customerName: z.string().min(1),
   customerEmail: z.string().email(),
   customerPhone: z.string().min(1),
+  bookedDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
 function getBaseUrl(req: Request) {
@@ -48,6 +54,14 @@ function toCents(amount: number) {
   return Math.round(amount * 100);
 }
 
+function looksLikeMissingBookedDateColumn(err: any) {
+  const msg = (err?.message ?? err?.toString?.() ?? "").toString();
+  return (
+    msg.includes("'booked_date'") &&
+    msg.toLowerCase().includes("schema cache")
+  );
+}
+
 function looksLikeMissingEventRegistrationsTable(err: any) {
   const msg = (err?.message ?? err?.toString?.() ?? "").toString().toLowerCase();
   return (
@@ -57,6 +71,10 @@ function looksLikeMissingEventRegistrationsTable(err: any) {
       msg.includes("schema cache") ||
       msg.includes("relation"))
   );
+}
+
+function missingScheduleMigrationMessage() {
+  return "Database is missing event booking date fields. Apply Supabase migration `014_event_recurrence_and_booked_date.sql` and try again.";
 }
 
 export async function POST(req: Request) {
@@ -69,12 +87,26 @@ export async function POST(req: Request) {
 
     const { data: event, error: eventError } = await supabase
       .from("events")
-      .select("id,title,price_per_entry,capacity,is_active")
+      .select(
+        "id,title,price_per_entry,capacity,is_active,starts_at,ends_at,is_recurring,recurrence_weekdays,recurrence_until"
+      )
       .eq("id", input.eventId)
       .maybeSingle();
     if (eventError) throw eventError;
     if (!event || !event.is_active) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    }
+
+    if (!isDateKey(input.bookedDate)) {
+      return NextResponse.json(
+        { error: "Please choose a valid date." },
+        { status: 400 }
+      );
+    }
+
+    const dateError = bookableDateError(event as any, input.bookedDate);
+    if (dateError) {
+      return NextResponse.json({ error: dateError }, { status: 400 });
     }
 
     const unitPrice = Number((event as any).price_per_entry);
@@ -85,13 +117,14 @@ export async function POST(req: Request) {
       );
     }
 
-    // Capacity enforcement (best effort; final enforcement is still server-side here).
+    // Capacity is per booked day so recurring events don't share one pool.
     const capacity = (event as any).capacity as number | null;
     if (typeof capacity === "number") {
       const { data: regs, error: regsError } = await supabase
         .from("event_registrations")
         .select("quantity,status")
         .eq("event_id", input.eventId)
+        .eq("booked_date", input.bookedDate)
         .in("status", ["pending", "confirmed"]);
       if (regsError) {
         if (looksLikeMissingEventRegistrationsTable(regsError)) {
@@ -103,6 +136,12 @@ export async function POST(req: Request) {
             { status: 500 }
           );
         }
+        if (looksLikeMissingBookedDateColumn(regsError)) {
+          return NextResponse.json(
+            { error: missingScheduleMigrationMessage() },
+            { status: 500 }
+          );
+        }
         throw regsError;
       }
 
@@ -111,7 +150,7 @@ export async function POST(req: Request) {
         0;
       if (used + input.quantity > capacity) {
         return NextResponse.json(
-          { error: "Not enough spots left for this event" },
+          { error: "Not enough spots left for that day" },
           { status: 409 }
         );
       }
@@ -131,6 +170,7 @@ export async function POST(req: Request) {
         quantity: input.quantity,
         price_paid: total,
         status: "pending",
+        booked_date: input.bookedDate,
       });
     if (insertError) {
       if (looksLikeMissingEventRegistrationsTable(insertError)) {
@@ -139,6 +179,12 @@ export async function POST(req: Request) {
             error:
               "Database is missing `event_registrations`. Apply Supabase migration `010_create_event_registrations_table.sql` and try again.",
           },
+          { status: 500 }
+        );
+      }
+      if (looksLikeMissingBookedDateColumn(insertError)) {
+        return NextResponse.json(
+          { error: missingScheduleMigrationMessage() },
           { status: 500 }
         );
       }
@@ -159,7 +205,7 @@ export async function POST(req: Request) {
           price_data: {
             currency: STRIPE_CURRENCY,
             product_data: {
-              name: `${(event as any).title} — Event ticket`,
+              name: `${(event as any).title} — ${formatDateKeyLabel(input.bookedDate)}`,
             },
             unit_amount: toCents(unitPrice),
           },
@@ -173,6 +219,7 @@ export async function POST(req: Request) {
         type: "event",
         eventRegistrationId: registrationId,
         eventId: input.eventId,
+        bookedDate: input.bookedDate,
         currency: STRIPE_CURRENCY,
       },
     });

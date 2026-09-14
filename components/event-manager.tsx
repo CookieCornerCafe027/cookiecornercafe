@@ -16,6 +16,15 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { DateTimePicker } from "@/components/date-time-picker";
+import { DatePicker } from "@/components/date-picker";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import {
+  WEEKDAY_SHORT,
+  formatEventScheduleLabel,
+  parseDateKeyToLocalDate,
+  toDateKeyLocal,
+  type Weekday,
+} from "@/lib/events/schedule";
 
 interface EventRow {
   id: string;
@@ -28,6 +37,9 @@ interface EventRow {
   is_active: boolean;
   starts_at: string | null;
   ends_at: string | null;
+  is_recurring?: boolean;
+  recurrence_weekdays?: number[] | null;
+  recurrence_until?: string | null;
   created_at: string;
 }
 
@@ -57,6 +69,9 @@ export function EventManager({ events: initialEvents }: EventManagerProps) {
 
   const [startsAt, setStartsAt] = useState<Date | null>(null);
   const [endsAt, setEndsAt] = useState<Date | null>(null);
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurrenceWeekdays, setRecurrenceWeekdays] = useState<Weekday[]>([]);
+  const [recurrenceUntil, setRecurrenceUntil] = useState<Date | undefined>(undefined);
 
   const setDateKeepingTime = (targetDate: Date, sourceTime: Date) => {
     const next = new Date(targetDate);
@@ -90,6 +105,9 @@ export function EventManager({ events: initialEvents }: EventManagerProps) {
     });
     setStartsAt(null);
     setEndsAt(null);
+    setIsRecurring(false);
+    setRecurrenceWeekdays([]);
+    setRecurrenceUntil(undefined);
     setEditingEvent(null);
     setImageFiles([]);
     setImagePreviews([]);
@@ -108,6 +126,22 @@ export function EventManager({ events: initialEvents }: EventManagerProps) {
     });
     setStartsAt(event.starts_at ? new Date(event.starts_at) : null);
     setEndsAt(event.ends_at ? new Date(event.ends_at) : null);
+    setIsRecurring(Boolean(event.is_recurring));
+    const savedWeekdays = (event.recurrence_weekdays ?? []).filter(
+      (day): day is Weekday => Number.isInteger(day) && day >= 0 && day <= 6
+    );
+    setRecurrenceWeekdays(
+      savedWeekdays.length > 0
+        ? savedWeekdays
+        : event.starts_at
+          ? [new Date(event.starts_at).getDay() as Weekday]
+          : []
+    );
+    setRecurrenceUntil(
+      event.recurrence_until
+        ? parseDateKeyToLocalDate(event.recurrence_until.slice(0, 10)) ?? undefined
+        : undefined
+    );
     setExistingImageUrls(event.image_urls || []);
     setImageFiles([]);
     setImagePreviews([]);
@@ -200,6 +234,21 @@ export function EventManager({ events: initialEvents }: EventManagerProps) {
         return;
       }
 
+      const weekdays = [...new Set(recurrenceWeekdays)].sort((a, b) => a - b);
+      if (isRecurring && weekdays.length === 0) {
+        alert("Choose at least one weekday for a recurring event");
+        return;
+      }
+
+      if (isRecurring && recurrenceUntil) {
+        const untilKey = toDateKeyLocal(recurrenceUntil);
+        const startKey = toDateKeyLocal(startsAt);
+        if (untilKey < startKey) {
+          alert("Repeat until date must be on or after the first date");
+          return;
+        }
+      }
+
       const price = Number.parseFloat(formData.price_per_entry);
       if (!Number.isFinite(price) || price < 0) {
         alert("Price per entry must be a valid number");
@@ -232,6 +281,10 @@ export function EventManager({ events: initialEvents }: EventManagerProps) {
         location: formData.location?.trim() ? formData.location.trim() : null,
         starts_at: startsAtIso,
         ends_at: endsAtIso,
+        is_recurring: isRecurring,
+        recurrence_weekdays: isRecurring ? weekdays : [],
+        recurrence_until:
+          isRecurring && recurrenceUntil ? toDateKeyLocal(recurrenceUntil) : null,
         is_active: formData.is_active,
       };
 
@@ -338,8 +391,29 @@ export function EventManager({ events: initialEvents }: EventManagerProps) {
               </div>
             </div>
 
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="is_recurring"
+                checked={isRecurring}
+                onCheckedChange={(checked) => {
+                  setIsRecurring(checked);
+                  if (
+                    checked &&
+                    recurrenceWeekdays.length === 0 &&
+                    startsAt
+                  ) {
+                    setRecurrenceWeekdays([startsAt.getDay() as Weekday]);
+                  }
+                  if (!checked) {
+                    setRecurrenceUntil(undefined);
+                  }
+                }}
+              />
+              <Label htmlFor="is_recurring">Recurring event</Label>
+            </div>
+
             <div className="grid gap-2">
-              <Label>Start date & time</Label>
+              <Label>{isRecurring ? "First date & time" : "Event date & time"}</Label>
               <DateTimePicker
                 value={startsAt}
                 onChange={(next: Date | null) => {
@@ -350,12 +424,20 @@ export function EventManager({ events: initialEvents }: EventManagerProps) {
                   }
                   // Keep end on the same day as start (retain end time if already set).
                   setEndsAt((prev) => (prev ? setDateKeepingTime(next, prev) : prev));
+                  if (isRecurring && recurrenceWeekdays.length === 0) {
+                    setRecurrenceWeekdays([next.getDay() as Weekday]);
+                  }
                 }}
               />
+              <p className="text-xs text-muted-foreground">
+                {isRecurring
+                  ? "Guests pick a matching day. The time you set here is used for every occurrence."
+                  : "Guests book this specific date."}
+              </p>
             </div>
 
             <div className="grid gap-2">
-              <Label>End date & time (optional)</Label>
+              <Label>{isRecurring ? "End time (optional)" : "End date & time (optional)"}</Label>
               <DateTimePicker
                 value={endsAt}
                 fixedDate={startsAt}
@@ -375,6 +457,59 @@ export function EventManager({ events: initialEvents }: EventManagerProps) {
                 allowClear
               />
             </div>
+
+            {isRecurring ? (
+              <>
+                <div className="grid gap-2">
+                  <Label>Repeats on</Label>
+                  <ToggleGroup
+                    type="multiple"
+                    variant="outline"
+                    className="flex w-full flex-wrap justify-start"
+                    value={recurrenceWeekdays.map(String)}
+                    onValueChange={(values) => {
+                      const next = values
+                        .map((value) => Number.parseInt(value, 10))
+                        .filter(
+                          (day): day is Weekday =>
+                            Number.isInteger(day) && day >= 0 && day <= 6
+                        );
+                      setRecurrenceWeekdays(next);
+                    }}
+                  >
+                    {WEEKDAY_SHORT.map((label, day) => (
+                      <ToggleGroupItem
+                        key={label}
+                        value={String(day)}
+                        aria-label={label}
+                        className="min-w-10 px-2"
+                      >
+                        {label}
+                      </ToggleGroupItem>
+                    ))}
+                  </ToggleGroup>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label>Repeats until (optional)</Label>
+                  <DatePicker
+                    value={recurrenceUntil}
+                    onChange={setRecurrenceUntil}
+                    placeholder="No end date"
+                    allowClear
+                    defaultMonth={startsAt ?? undefined}
+                    isDateDisabled={(date) => {
+                      if (!startsAt) return false;
+                      const start = new Date(startsAt);
+                      start.setHours(0, 0, 0, 0);
+                      const candidate = new Date(date);
+                      candidate.setHours(0, 0, 0, 0);
+                      return candidate < start;
+                    }}
+                  />
+                </div>
+              </>
+            ) : null}
 
             <div className="grid gap-2">
               <Label htmlFor="location">Location (optional)</Label>
@@ -496,11 +631,20 @@ export function EventManager({ events: initialEvents }: EventManagerProps) {
                     >
                       {event.is_active ? "Active" : "Inactive"}
                     </span>
+                    {event.is_recurring ? (
+                      <span className="text-xs px-2 py-1 rounded bg-secondary text-secondary-foreground">
+                        Recurring
+                      </span>
+                    ) : null}
                   </div>
                   {event.description ? <p className="text-sm text-muted-foreground mb-2">{event.description}</p> : null}
                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
                     <span>${event.price_per_entry.toFixed(2)} per entry</span>
-                    {event.starts_at ? <span>Starts: {new Date(event.starts_at).toLocaleString()}</span> : <span>Starts: TBD</span>}
+                    {event.starts_at ? (
+                      <span>{formatEventScheduleLabel(event)}</span>
+                    ) : (
+                      <span>Starts: TBD</span>
+                    )}
                     {event.location ? <span>Location: {event.location}</span> : <span>Location: TBD</span>}
                     {typeof event.capacity === "number" ? <span>Capacity: {event.capacity}</span> : <span>Capacity: TBD</span>}
                   </div>

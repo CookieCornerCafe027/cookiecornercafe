@@ -32,6 +32,7 @@ interface EventRow {
   description: string | null;
   image_urls: string[] | null;
   price_per_entry: number;
+  pricing_options?: { label: string; price: number }[] | null;
   capacity: number | null;
   location: string | null;
   is_active: boolean;
@@ -57,7 +58,7 @@ export function EventManager({ events: initialEvents }: EventManagerProps) {
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
-
+const [pricingOptions, setPricingOptions] = useState<{ label: string; price: string }[]>([]);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -103,6 +104,7 @@ export function EventManager({ events: initialEvents }: EventManagerProps) {
       location: "",
       is_active: true,
     });
+    setPricingOptions([]);
     setStartsAt(null);
     setEndsAt(null);
     setIsRecurring(false);
@@ -124,6 +126,12 @@ export function EventManager({ events: initialEvents }: EventManagerProps) {
       location: event.location || "",
       is_active: event.is_active,
     });
+    setPricingOptions(
+  (event.pricing_options ?? []).map((option) => ({
+    label: option.label,
+    price: String(option.price),
+  }))
+);
     setStartsAt(event.starts_at ? new Date(event.starts_at) : null);
     setEndsAt(event.ends_at ? new Date(event.ends_at) : null);
     setIsRecurring(Boolean(event.is_recurring));
@@ -277,6 +285,12 @@ export function EventManager({ events: initialEvents }: EventManagerProps) {
         description: formData.description?.trim() ? formData.description.trim() : null,
         image_urls: allImageUrls.length > 0 ? allImageUrls : null,
         price_per_entry: price,
+        pricing_options: pricingOptions
+  .filter((option) => option.label.trim() && option.price.trim())
+  .map((option) => ({
+    label: option.label.trim(),
+    price: Number(option.price),
+  })),
         capacity: formData.capacity.trim() ? Number.parseInt(formData.capacity, 10) : null,
         location: formData.location?.trim() ? formData.location.trim() : null,
         starts_at: startsAtIso,
@@ -390,6 +404,58 @@ export function EventManager({ events: initialEvents }: EventManagerProps) {
                 />
               </div>
             </div>
+<div className="grid gap-2">
+  <Label>Pricing options</Label>
+
+  {pricingOptions.map((option, index) => (
+    <div key={index} className="flex gap-2">
+      <Input
+        placeholder="Option name (e.g. 1 Person)"
+        value={option.label}
+        onChange={(e) => {
+          const updated = [...pricingOptions];
+          updated[index].label = e.target.value;
+          setPricingOptions(updated);
+        }}
+      />
+
+      <Input
+        type="number"
+        min="0"
+        step="0.01"
+        placeholder="Price"
+        value={option.price}
+        onChange={(e) => {
+          const updated = [...pricingOptions];
+          updated[index].price = e.target.value;
+          setPricingOptions(updated);
+        }}
+      />
+
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() =>
+          setPricingOptions(pricingOptions.filter((_, i) => i !== index))
+        }
+      >
+        <Trash2 className="h-4 w-4" />
+      </Button>
+    </div>
+  ))}
+
+  <Button
+    type="button"
+    variant="outline"
+    onClick={() =>
+      setPricingOptions([...pricingOptions, { label: "", price: "" }])
+    }
+  >
+    <Plus className="mr-2 h-4 w-4" />
+    Add pricing option
+  </Button>
+</div>
+
 
             <div className="flex items-center space-x-2">
               <Switch

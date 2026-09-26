@@ -280,24 +280,7 @@ export function EventDetail({ event }: { event: EventForDetail }) {
               />
             </div>
 
-            <div className="hidden md:grid gap-2">
-              <Label htmlFor="ticketQty">Tickets</Label>
-              <Input
-                id="ticketQty"
-                type="number"
-                inputMode="numeric"
-                min={1}
-                max={99}
-                value={ticketQty}
-                onChange={(e) => setTicketQtyFromInput(e.target.value)}
-              />
-              <p className="text-sm text-muted-foreground">
-                Total:{" "}
-                <span className="font-semibold text-foreground">
-                  ${total.toFixed(2)}
-                </span>
-              </p>
-            </div>
+           
 
             <Button
               size="lg"

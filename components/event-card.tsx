@@ -105,7 +105,8 @@ export function EventCard({ event }: { event: EventForCard }) {
 ) : (
   <span className="text-lg font-semibold text-primary">
     ${event.price_per_entry.toFixed(2)}
-  </span>
+  </span> 
+    )}
           {typeof event.capacity === "number" ? (
             <span className="text-xs text-muted-foreground">
               Capacity: {event.capacity}

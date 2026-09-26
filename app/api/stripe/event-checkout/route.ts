@@ -17,6 +17,7 @@ const STRIPE_CURRENCY = (process.env.STRIPE_CURRENCY ?? "cad").toLowerCase();
 const EventCheckoutRequestSchema = z.object({
   eventId: z.string().uuid(),
   quantity: z.number().int().min(1).max(99),
+  pricingIndex: z.number().int().min(0),
   customerName: z.string().min(1),
   customerEmail: z.string().email(),
   customerPhone: z.string().min(1),
@@ -88,7 +89,7 @@ export async function POST(req: Request) {
     const { data: event, error: eventError } = await supabase
       .from("events")
       .select(
-        "id,title,price_per_entry,capacity,is_active,starts_at,ends_at,is_recurring,recurrence_weekdays,recurrence_until"
+        "id,title,price_per_entry,pricing_options,capacity,is_active,starts_at,ends_at,is_recurring,recurrence_weekdays,recurrence_until"
       )
       .eq("id", input.eventId)
       .maybeSingle();
@@ -109,7 +110,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: dateError }, { status: 400 });
     }
 
-    const unitPrice = Number((event as any).price_per_entry);
+   const pricingOptions = Array.isArray((event as any).pricing_options)
+  ? (event as any).pricing_options
+  : [];
+
+const selectedOption = pricingOptions[input.pricingIndex];
+
+const unitPrice = selectedOption
+  ? Number(selectedOption.price)
+  : Number((event as any).price_per_entry);
     if (!Number.isFinite(unitPrice) || unitPrice <= 0) {
       return NextResponse.json(
         { error: "Invalid event price" },

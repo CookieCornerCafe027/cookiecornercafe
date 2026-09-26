@@ -94,27 +94,31 @@ export function EventCard({ event }: { event: EventForCard }) {
       </div>
 
       <CardFooter className="relative z-10 flex items-center justify-between mt-auto pointer-events-auto">
-        {event.pricing_options && event.pricing_options.length > 0 ? (
-  <div className="flex flex-col">
-    {event.pricing_options.map((option, index) => (
-      <span key={index} className="text-sm font-semibold text-primary">
-        {option.label}: ${option.price.toFixed(2)}
-      </span>
-    ))}
-  </div>
-) : (
-  <span className="text-lg font-semibold text-primary">
-    ${event.price_per_entry.toFixed(2)}
-  </span> 
-    )}
-          {typeof event.capacity === "number" ? (
-            <span className="text-xs text-muted-foreground">
-              Capacity: {event.capacity}
-            </span>
-          ) : (
-            <span className="text-xs text-muted-foreground">Capacity: TBD</span>
-          )}
-        </div>
+        <div className="flex flex-col">
+  {event.pricing_options && event.pricing_options.length > 0 ? (
+    <>
+      {event.pricing_options.map((option, index) => (
+        <span key={index} className="text-sm font-semibold text-primary">
+          {option.label}: ${option.price.toFixed(2)}
+        </span>
+      ))}
+    </>
+  ) : (
+    <span className="text-lg font-semibold text-primary">
+      ${event.price_per_entry.toFixed(2)}
+    </span>
+  )}
+
+  {typeof event.capacity === "number" ? (
+    <span className="text-xs text-muted-foreground">
+      Capacity: {event.capacity}
+    </span>
+  ) : (
+    <span className="text-xs text-muted-foreground">
+      Capacity: TBD
+    </span>
+  )}
+</div>
         <Button asChild>
           <Link href={`/events/${event.id}`}>View</Link>
         </Button>

@@ -22,6 +22,7 @@ export interface EventCheckoutFormProps {
     id: string;
     title: string;
     price_per_entry: number;
+    pricing_options?: { label: string; price: number }[];
   } & EventScheduleFields;
   initialQuantity?: number;
   initialDate?: string;
@@ -43,8 +44,10 @@ export function EventCheckoutForm({
     if (fromQuery && isBookableLocalDate(event, fromQuery)) return fromQuery;
     return getNextBookableLocalDate(event) ?? undefined;
   });
-
-  const total = useMemo(() => event.price_per_entry * ticketQty, [event.price_per_entry, ticketQty]);
+const pricingOptions = event.pricing_options ?? [];
+const [selectedPricingIndex, setSelectedPricingIndex] = useState(0);
+  const selectedPrice = pricingOptions[selectedPricingIndex]?.price ?? event.price_per_entry;
+const total = useMemo(() => selectedPrice * ticketQty, [selectedPrice, ticketQty]);
   const bookedDateKey = selectedDate ? toDateKeyLocal(selectedDate) : null;
 
   const startCheckout = async () => {
@@ -85,6 +88,7 @@ export function EventCheckoutForm({
         body: JSON.stringify({
           eventId: event.id,
           quantity: ticketQty,
+          pricingIndex: selectedPricingIndex,
           customerName,
           customerEmail,
           customerPhone,
@@ -124,9 +128,26 @@ export function EventCheckoutForm({
       <CardContent className="p-6 space-y-6">
         <div className="space-y-1">
           <h1 className="text-2xl font-display font-bold">{event.title}</h1>
-          <p className="text-sm text-muted-foreground">
-            ${event.price_per_entry.toFixed(2)} per entry
-          </p>
+         {pricingOptions.length > 0 ? (
+  <div className="grid gap-2">
+    <Label>Ticket type</Label>
+    <select
+      value={selectedPricingIndex}
+      onChange={(e) => setSelectedPricingIndex(Number(e.target.value))}
+      className="w-full rounded-md border p-2"
+    >
+      {pricingOptions.map((option, index) => (
+        <option key={index} value={index}>
+          {option.label}: ${option.price.toFixed(2)}
+        </option>
+      ))}
+    </select>
+  </div>
+) : (
+  <p className="text-sm text-muted-foreground">
+    ${event.price_per_entry.toFixed(2)} per entry
+  </p>
+)}
           {bookedDateKey ? (
             <p className="text-sm text-muted-foreground">
               {formatOccurrenceLabel(event, bookedDateKey)}

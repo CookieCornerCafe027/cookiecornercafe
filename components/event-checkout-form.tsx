@@ -87,7 +87,7 @@ const total = useMemo(() => selectedPrice * ticketQty, [selectedPrice, ticketQty
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           eventId: event.id,
-          quantity: ticketQty,
+          quantity: 1,
           pricingIndex: selectedPricingIndex,
           customerName,
           customerEmail,
@@ -166,24 +166,7 @@ const total = useMemo(() => selectedPrice * ticketQty, [selectedPrice, ticketQty
             />
           </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="ticketQtyCheckout">Tickets</Label>
-            <Input
-              id="ticketQtyCheckout"
-              type="number"
-              inputMode="numeric"
-              min={1}
-              max={99}
-              value={ticketQty}
-              onChange={(e) => setTicketQty(Number(e.target.value))}
-            />
-            <p className="text-sm text-muted-foreground">
-              Total:{" "}
-              <span className="font-semibold text-foreground">
-                ${total.toFixed(2)}
-              </span>
-            </p>
-          </div>
+          
 
           <div className="grid gap-2">
             <Label htmlFor="customerNameCheckout">Full Name</Label>
